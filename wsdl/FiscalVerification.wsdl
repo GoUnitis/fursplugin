@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:uis="http://www.fu.gov.si/" xmlns:fis="http://www.fu.gov.si/" xmlns:ns="http://www.w3.org/2000/09/xmldsig#" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xi="http://www.w3.org/2001/XInclude" name="FiscalVerificationService" targetNamespace="http://www.fu.gov.si/">
+	<wsdl:types>
+		<xsd:schema targetNamespace="http://www.fu.gov.si/v1/cash_registers">
+			<xsd:import namespace="http://www.fu.gov.si/" schemaLocation="FiscalVerificationSchema.xsd"/>
+		</xsd:schema>
+	</wsdl:types>
+	<wsdl:message name="InvoiceRequest">
+		<wsdl:part name="request" element="fis:InvoiceRequest"/>
+	</wsdl:message>
+	<wsdl:message name="InvoiceResponse">
+		<wsdl:part name="response" element="fis:InvoiceResponse"/>
+	</wsdl:message>
+	<wsdl:message name="BusinessPremiseRequest">
+		<wsdl:part name="request" element="fis:BusinessPremiseRequest"/>
+	</wsdl:message>
+	<wsdl:message name="BusinessPremiseResponse">
+		<wsdl:part name="response" element="fis:BusinessPremiseResponse"/>
+	</wsdl:message>
+	<wsdl:message name="EchoRequest">
+		<wsdl:part name="request" element="fis:EchoRequest"/>
+	</wsdl:message>
+	<wsdl:message name="EchoResponse">
+		<wsdl:part name="response" element="fis:EchoResponse"/>
+	</wsdl:message>
+	<wsdl:portType name="FiscalVerificationPortType">
+		<wsdl:operation name="invoice">
+			<wsdl:input message="uis:InvoiceRequest"/>
+			<wsdl:output message="uis:InvoiceResponse"/>
+		</wsdl:operation>
+		<wsdl:operation name="businessPremise">
+			<wsdl:input message="uis:BusinessPremiseRequest"/>
+			<wsdl:output message="uis:BusinessPremiseResponse"/>
+		</wsdl:operation>
+		<wsdl:operation name="echo">
+			<wsdl:input message="uis:EchoRequest"/>
+			<wsdl:output message="uis:EchoResponse"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="FiscalVerificationService" type="uis:FiscalVerificationPortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="invoice">
+			<soap:operation soapAction="/invoices" style="document"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="businessPremise">
+			<soap:operation soapAction="/invoices/register"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="echo">
+			<soap:operation soapAction="/echo"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="FiscalVerificationService">
+		<wsdl:port name="FiscalVerificationPortType" binding="uis:FiscalVerificationService">
+			<soap:address location="https://blagajne-test.fu.gov.si:9002/v1/cash_registers"/>
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>

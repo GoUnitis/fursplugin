@@ -1,0 +1,107 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>si.gounitis</groupId>
+  <artifactId>fursplugin</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>fursplugin</name>
+  
+  <properties>
+    <axis2.version>1.6.3</axis2.version>
+    <axiom.version>1.2.14</axiom.version>
+  </properties>
+  
+  <dependencies>
+  
+    <!-- AXIS2 -->
+    <dependency>
+      <groupId>org.apache.axis2</groupId>
+      <artifactId>axis2</artifactId>
+      <version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.axis2</groupId>
+      <artifactId>axis2-transport-local</artifactId>
+      <version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.axis2</groupId>
+      <artifactId>axis2-transport-http</artifactId>
+      <version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.ws.commons.schema</groupId>
+      <artifactId>XmlSchema</artifactId>
+      <version>1.4.7</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.ws.commons.axiom</groupId>
+      <artifactId>axiom-api</artifactId>
+      <version>${axiom.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.ws.commons.axiom</groupId>
+      <artifactId>axiom-impl</artifactId>
+      <version>${axiom.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>wsdl4j</groupId>
+      <artifactId>wsdl4j</artifactId>
+      <version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.neethi</groupId>
+      <artifactId>neethi</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    
+    <!-- TEST -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    
+  </dependencies>
+  
+  <build>
+    <plugins>
+    
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies
+              </outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+    </plugins>
+  </build>
+</project>

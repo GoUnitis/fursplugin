@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:fu="http://www.fu.gov.si/" xmlns:xd="http://www.w3.org/2000/09/xmldsig#">
+	<soapenv:Body>
+		<fu:BusinessPremiseRequest Id="data">
+			<fu:Header>
+				<fu:MessageID>d9e022a8-362c-4aba-857d-c2b4e79295bd</fu:MessageID>
+				<fu:DateTime>2015-09-16T12:07:28</fu:DateTime>
+			</fu:Header>
+			<fu:BusinessPremise>
+				<fu:TaxNumber>99999862</fu:TaxNumber>
+				<fu:BusinessPremiseID>36CF</fu:BusinessPremiseID>
+				<fu:BPIdentifier>
+					<fu:RealEstateBP>
+						<fu:PropertyID>
+							<fu:CadastralNumber>365</fu:CadastralNumber>
+							<fu:BuildingNumber>12</fu:BuildingNumber>
+							<fu:BuildingSectionNumber>3</fu:BuildingSectionNumber>
+						</fu:PropertyID>
+						<fu:Address>
+							<fu:Street>Dunajska cesta</fu:Street>
+							<fu:HouseNumber>24</fu:HouseNumber>
+							<fu:HouseNumberAdditional>B</fu:HouseNumberAdditional>
+							<fu:Community>Ljubljana</fu:Community>
+							<fu:City>Ljubljana</fu:City>
+							<fu:PostalCode>1000</fu:PostalCode>
+						</fu:Address>
+					</fu:RealEstateBP>
+				</fu:BPIdentifier>
+				<fu:ValidityDate>2100-08-25</fu:ValidityDate>
+				<fu:SoftwareSupplier>
+					<fu:TaxNumber>24564444</fu:TaxNumber>
+				</fu:SoftwareSupplier>
+				<fu:SpecialNotes>Primer prijave poslovnega prostora</fu:SpecialNotes>
+			</fu:BusinessPremise>
+		<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" /><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" /><Reference URI="#data"><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><DigestValue>mqBkm+EhzlSunaTRw289IQ8/013GIQsKcFavXymJu4k=</DigestValue></Reference></SignedInfo><SignatureValue>NRVae9V4z9GGLQk96rUi5GE2dBiqtwHivYvK0nFSftP7wONIRwSOxQUfPTXZMGTUYxaWDolayO3n1Sm3uAfWhdHQWSWJmwaSJiHlOl8M4dbKciR7tsZpQEA75i1pRn7L7xcmBkAbDUKSU9kPsopQ3ZqmYGjozLs76ByEe//h2r1dCrDVARpCjCOmjhmUVcXqiNKUWU+f+HB1t2uL6GTq4zN3jw7mK/r5aDqGHfMkKdh9VYUdEMNkkXnZWoR9aHIsLeaC0SJM5ulk5UWaDYH23nhxE3cOSQp5TQNqrAlHNQAiXYybp61XfNTpeiq7M1ccUWCAuRNKhtswj6y5Ic4QQg==</SignatureValue><KeyInfo><X509Data><X509IssuerSerial><X509IssuerName>CN=Tax CA Test, O=state-institutions, C=SI</X509IssuerName><X509SerialNumber>2575988469811686647</X509SerialNumber></X509IssuerSerial><X509SubjectName>CN="ITM STORITVE, ŠPELA PERGAR S.P.", SERIALNUMBER=1, OU=99999862, OU=DavPotRacTEST, O=state-institutions, C=SI</X509SubjectName></X509Data></KeyInfo></Signature></fu:BusinessPremiseRequest>
+	</soapenv:Body>
+</soapenv:Envelope>
