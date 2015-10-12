@@ -1,3 +1,23 @@
+//********************************************************************************
+//
+//    About - About box class
+//
+//    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
+//
+//    This program is free software; you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 2 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//********************************************************************************
+//    Revision history:
+//        12.10.2015: J. Zelic - First Version
+//********************************************************************************
 package si.gounitis.fursplugin.tests;
 
 import org.junit.Test;
@@ -16,9 +36,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 
-/**
- * Created by Jure on 9.10.2015.
- */
 public class TestSign {
     private static String ID_VALUE = "data";
 
@@ -47,8 +64,6 @@ public class TestSign {
 
             Document sdoc = Sign.signDocument(doc, "#"+ID_VALUE, "signcert");
             printDocument(sdoc);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

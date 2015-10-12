@@ -67,7 +67,7 @@ public class FursPluginSimple implements FursPlugin{
         this.url=url;
     }
 
-    public void reportPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
+    public void registerPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
 
         checkInput(uuid, premise);
 
@@ -142,7 +142,7 @@ public class FursPluginSimple implements FursPlugin{
             Element businessPremiseElement = doc.createElementNS(FU_NAMESPACE, "BusinessPremise");
             rootElement.appendChild(businessPremiseElement);
             setFinalElement(FU_NAMESPACE, "TaxNumber", premise.getTaxNumber(), doc, businessPremiseElement);
-            setFinalElement(FU_NAMESPACE, "BusinessPremiseID", premise.getPremiseLabel(), doc, businessPremiseElement);
+            setFinalElement(FU_NAMESPACE, "BusinessPremiseID", premise.getPremiseId(), doc, businessPremiseElement);
 
             // <BPIdentifier>
             Element bPIdentifierElement = doc.createElementNS(FU_NAMESPACE, "BPIdentifier");
@@ -180,7 +180,7 @@ public class FursPluginSimple implements FursPlugin{
             if (swProvider.getVat()!=null) {
                 setFinalElement(FU_NAMESPACE, "TaxNumber",swProvider.getVat(), doc, softwareSupplier);
             } else {
-                setFinalElement(FU_NAMESPACE, "NameForeign",swProvider.getTitle(), doc, softwareSupplier);
+                setFinalElement(FU_NAMESPACE, "NameForeign",swProvider.getForeignTitle(), doc, softwareSupplier);
             }
 
             setFinalElement(FU_NAMESPACE, "SpecialNotes",premise.getAux(), doc, businessPremiseElement);

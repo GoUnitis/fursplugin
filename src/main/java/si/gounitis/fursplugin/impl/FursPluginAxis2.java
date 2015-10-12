@@ -55,7 +55,7 @@ public class FursPluginAxis2 implements FursPlugin{
         this.url=url;
     }
 
-    public void reportPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
+    public void registerPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
 
         String signElemetId="burek";
 
@@ -104,7 +104,7 @@ public class FursPluginAxis2 implements FursPlugin{
         businessPremise.setTaxNumber(taxNumber);
 
         BusinessPremiseIDType premiseID = new BusinessPremiseIDType();
-        premiseID.setBusinessPremiseIDType(premise.getPremiseLabel());
+        premiseID.setBusinessPremiseIDType(premise.getPremiseId());
         businessPremise.setBusinessPremiseID(premiseID);
 
         BPIdentifierType bpIdentifier = new BPIdentifierType();
@@ -179,9 +179,9 @@ public class FursPluginAxis2 implements FursPlugin{
             PositiveInteger pi = new PositiveInteger(swProvider.getVat());
             tn.setTaxNumberType(pi);
             swSuplier.setTaxNumber(tn);
-        } else if (swProvider.getTitle()!=null) {
+        } else if (swProvider.getForeignTitle()!=null) {
             NameForeign_type1 nf = new NameForeign_type1();
-            nf.setNameForeign_type0(swProvider.getTitle());
+            nf.setNameForeign_type0(swProvider.getForeignTitle());
             swSuplier.setNameForeign(nf);
         }
         businessPremise.addSoftwareSupplier(swSuplier);

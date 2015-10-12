@@ -27,7 +27,7 @@ import si.gounitis.fursplugin.FursObject;
  */
 public class Premise implements FursObject {
     private String taxNumber; // mandatory, len=8
-    private String premiseLabel; // mandatory, len=1-20
+    private String premiseId; // mandatory, len=1-20
     private CadastralData cadastralData; // mandatory if imovable premises
     private Address adress; // mandatory if imovable premises
     private char movablePremise; // mandatory if movable premises
@@ -46,8 +46,8 @@ public class Premise implements FursObject {
         return taxNumber;
     }
 
-    public String getPremiseLabel() {
-        return premiseLabel;
+    public String getPremiseId() {
+        return premiseId;
     }
 
     public CadastralData getCadastralData() {
@@ -82,8 +82,8 @@ public class Premise implements FursObject {
         this.taxNumber = taxNumber;
     }
 
-    public void setPremiseLabel(String premiseLabel) {
-        this.premiseLabel = premiseLabel;
+    public void setPremiseId(String premiseId) {
+        this.premiseId = premiseId;
     }
 
     public void setCadastralData(CadastralData cadastralData) {

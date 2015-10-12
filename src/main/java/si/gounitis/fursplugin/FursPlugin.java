@@ -24,7 +24,7 @@ import si.gounitis.fursplugin.beans.Invoice;
 import si.gounitis.fursplugin.beans.Premise;
 
 public interface FursPlugin {
-    void reportPremise(String id, Premise premise, String signingCertAlias) throws FursPluginException;
+    void registerPremise(String id, Premise premise, String signingCertAlias) throws FursPluginException;
     String issueInvoice(String id, Invoice invoice, String signingCertAlias) throws FursPluginException;
     void ping() throws FursPluginException;
 }

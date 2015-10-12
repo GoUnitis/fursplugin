@@ -3,6 +3,4 @@ test-sign.cer - Javni kljuè digitalnega potrdila za podpis
 sitest-ca.cer - Certifikat overitelja za TLS potrdilo
 TaxCATest.cer - Certifikat overitelja Tax CA test
 
-Keypair za podpisovanje in TSLpovezave Geslo je Geslo123#
-
 keystore.jks - keystore za HTTPS (geslo je changeit)

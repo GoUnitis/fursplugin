@@ -25,21 +25,21 @@ package si.gounitis.fursplugin.beans;
  */
 public class SwProvider {
     private String vat; // if slovenian provider
-    private String title; // name + address if not slovenan provider
+    private String foreignTitle; // name + address if not slovenan provider
 
     public String getVat() {
         return vat;
     }
 
-    public String getTitle() {
-        return title;
+    public String getForeignTitle() {
+        return foreignTitle;
     }
 
     public void setVat(String vat) {
         this.vat = vat;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setForeignTitle(String foreignTitle) {
+        this.foreignTitle = foreignTitle;
     }
 }
