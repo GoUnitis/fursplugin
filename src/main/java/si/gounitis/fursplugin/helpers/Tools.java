@@ -16,8 +16,23 @@
 //    Revision history:
 //        12.10.2015: J. Zelic - First Version
 //********************************************************************************
-package si.gounitis.fursplugin;
+package si.gounitis.fursplugin.helpers;
 
-public interface FursObject {
-    boolean validateData();
+import java.util.Random;
+
+public class Tools {
+
+    /**
+     * generate unique message ID
+     *
+     * @return unique message ID
+     */
+    public static String getNewUiid(){
+        Random random = new Random();
+        return Integer.toHexString(random.nextInt(0xffff))+Integer.toHexString(random.nextInt(0xffff))+"-"+
+                Integer.toHexString(random.nextInt(0xffff))+"-"+
+                Integer.toHexString(random.nextInt(0xffff))+"-"+
+                Integer.toHexString(random.nextInt(0xffff))+"-"+
+                Integer.toHexString(random.nextInt(0xffff))+Integer.toHexString(random.nextInt(0xffff))+Integer.toHexString(random.nextInt(0xffff));
+    }
 }

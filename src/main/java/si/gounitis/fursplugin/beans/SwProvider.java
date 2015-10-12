@@ -1,7 +1,5 @@
 //********************************************************************************
 //
-//    About - About box class
-//
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
@@ -20,9 +18,6 @@
 //********************************************************************************
 package si.gounitis.fursplugin.beans;
 
-/**
- * Created by Jure on 8.10.2015.
- */
 public class SwProvider {
     private String vat; // if slovenian provider
     private String foreignTitle; // name + address if not slovenan provider

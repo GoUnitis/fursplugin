@@ -1,7 +1,5 @@
 //********************************************************************************
 //
-//    About - About box class
-//
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
@@ -18,7 +16,6 @@
 //    Revision history:
 //        12.10.2015: J. Zelic - First Version
 //********************************************************************************
-
 package si.gounitis.fursplugin.tests;
 
 import org.junit.runner.JUnitCore;

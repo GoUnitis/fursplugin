@@ -1,7 +1,4 @@
-package si.gounitis.fursplugin.tests;
 //********************************************************************************
-//
-//    About - About box class
 //
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
@@ -19,11 +16,13 @@ package si.gounitis.fursplugin.tests;
 //    Revision history:
 //        12.10.2015: J. Zelic - First Version
 //********************************************************************************
+package si.gounitis.fursplugin.tests;
 
 import org.junit.Test;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.*;
+import si.gounitis.fursplugin.helpers.Tools;
 import si.gounitis.fursplugin.impl.FursPluginSimple;
 
 public class TestInvoice {
@@ -36,8 +35,9 @@ public class TestInvoice {
     }
 
     @Test
-    public void testInvoice() {
+    public void testInvoiceCacheRegister() {
 
+        boolean salesBook=false;
         FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
         //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
 
@@ -48,7 +48,29 @@ public class TestInvoice {
         Invoice invoice = new Invoice();
 
         try {
-            plugin.issueInvoice("12345678-1234-1234-1234-123456789ABC", invoice, premise, "signcert");
+            plugin.issueInvoice(Tools.getNewUiid(), invoice, salesBook, premise, "signcert");
+        } catch (FursPluginException e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
+    //@Test
+    public void testInvoiceSalesBook() {
+
+        boolean salesBook=true;
+        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+
+        Premise premise=new Premise();
+        premise.setTaxNumber("12345678");
+        premise.setPremiseId("36CF"); // 1-20 znakov brez presledkov (a-z,A-Z,0-9)
+
+        Invoice invoice = new Invoice();
+
+        try {
+            plugin.issueInvoice(Tools.getNewUiid(), invoice, salesBook , premise, "signcert");
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }

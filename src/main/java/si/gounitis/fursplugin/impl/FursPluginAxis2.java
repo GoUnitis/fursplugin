@@ -1,7 +1,5 @@
 //********************************************************************************
 //
-//    About - About box class
-//
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
@@ -95,7 +93,7 @@ public class FursPluginAxis2 implements FursPlugin{
         }
     }
 
-    public String issueInvoice(String uuid, Invoice invoice, Premise premise, String signingCertAlias) throws FursPluginException{
+    public String issueInvoice(String uuid, Invoice invoice, boolean salesBook, Premise premise, String signingCertAlias) throws FursPluginException{
 
         checkInput(uuid, invoice);
 

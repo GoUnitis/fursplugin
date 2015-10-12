@@ -1,7 +1,5 @@
 //********************************************************************************
 //
-//    About - About box class
-//
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
@@ -27,6 +25,7 @@ import si.gounitis.fursplugin.beans.Address;
 import si.gounitis.fursplugin.beans.CadastralData;
 import si.gounitis.fursplugin.beans.Premise;
 import si.gounitis.fursplugin.beans.SwProvider;
+import si.gounitis.fursplugin.helpers.Tools;
 import si.gounitis.fursplugin.impl.FursPluginSimple;
 
 public class TestPremise {
@@ -91,7 +90,7 @@ public class TestPremise {
         swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         try {
-            plugin.registerPremise("12345678-1234-1234-1234-123456789ABC", premise, "signcert");
+            plugin.registerPremise(Tools.getNewUiid(), premise, "signcert");
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
@@ -117,7 +116,7 @@ public class TestPremise {
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.registerPremise("12345678-1234-1234-1234-123456789ABC", premise, "signcert");
+            plugin.registerPremise(Tools.getNewUiid(), premise, "signcert");
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }

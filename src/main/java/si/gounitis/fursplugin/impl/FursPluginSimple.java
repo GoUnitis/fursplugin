@@ -1,7 +1,5 @@
 //********************************************************************************
 //
-//    About - About box class
-//
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
@@ -67,6 +65,14 @@ public class FursPluginSimple implements FursPlugin{
         this.url=url;
     }
 
+    /**
+     * register new premise (mobile or real estate) at FURS
+     *
+     * @param uuid - unique message ID (could be genertebd by si.gounitis.fursplugin.helpers.Tools.getNewUiid()
+     * @param premise - premise data POJO
+     * @param signingCertAlias - name of signing certificate in a keystore
+     * @@return
+     */
     public void registerPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
 
         checkInput(uuid, premise);
@@ -116,7 +122,17 @@ public class FursPluginSimple implements FursPlugin{
         }
     }
 
-    public String issueInvoice(String uuid, Invoice invoice, Premise premise, String signingCertAlias) throws FursPluginException{
+    /**
+     * issue an invoice
+     *
+     * @param uuid - unique message ID (could be genertebd by si.gounitis.fursplugin.helpers.Tools.getNewUiid()
+     * @param invoice - invoice data POJO
+     * @param salesBook - is invoice issued based on sales book invoice
+     * @param premise - premise data POJO
+     * @param signingCertAlias - name of signing certificate in a keystore
+     * @return invoice ID
+     */
+    public String issueInvoice(String uuid, Invoice invoice, boolean salesBook, Premise premise, String signingCertAlias) throws FursPluginException{
 
         checkInput(uuid, invoice);
 
@@ -133,7 +149,12 @@ public class FursPluginSimple implements FursPlugin{
 
             SOAPHeader soapHeader = envelope.getHeader();
             SOAPBody soapBody = envelope.getBody();
-            Document invoiceRequest=getInvoiceRequest(uuid, invoice, premise);
+            Document invoiceRequest;
+            if (salesBook) {
+                invoiceRequest = getSalesBookInvoiceRequest(uuid, invoice, premise);
+            } else {
+                invoiceRequest = getInvoiceRequest(uuid, invoice, premise);
+            }
             invoiceRequest = Sign.signDocument(invoiceRequest, "#" + SIGN_ELEMENT_ID, "signcert");
             String invoiceRequestString = documentToString(invoiceRequest);
 
@@ -163,6 +184,43 @@ public class FursPluginSimple implements FursPlugin{
         } catch (SOAPException e) {
             throw new FursPluginException(e);
         }
+    }
+
+    /**
+     * check FURS conectivity
+     *
+     * @return true if coection OK, false else
+     */
+    public void ping() throws FursPluginException{
+
+        try {
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+            // SOAP Envelope
+            MessageFactory messageFactory = MessageFactory.newInstance(SOAPProtocol);
+            SOAPMessage soapMessage = messageFactory.createMessage();
+            SOAPPart soapPart = soapMessage.getSOAPPart();
+
+            SOAPEnvelope envelope = soapPart.getEnvelope();
+            envelope.addNamespaceDeclaration("fu", "http://www.fu.gov.si");
+
+            SOAPHeader soapHeader = envelope.getHeader();
+            SOAPBody soapBody = envelope.getBody();
+            SOAPElement echoResponseElement = soapBody.addChildElement("EchoResponse","fu");
+            echoResponseElement.setTextContent(PING_STRING);
+
+            // Setting SOAPAction header line
+            MimeHeaders headers = soapMessage.getMimeHeaders();
+            headers.addHeader("SOAPAction", "/echo");
+
+            soapMessage.saveChanges();
+            soapConnection.call(soapMessage,this.url);
+
+        } catch (SOAPException e) {
+            throw new FursPluginException(e);
+        }
+
     }
 
     private Document getBusinessPremiseRequest(String uuid, Premise premise) throws FursPluginException {
@@ -275,36 +333,8 @@ public class FursPluginSimple implements FursPlugin{
 
     }
 
-    public void ping() throws FursPluginException{
-
-        try {
-            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
-            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
-
-            // SOAP Envelope
-            MessageFactory messageFactory = MessageFactory.newInstance(SOAPProtocol);
-            SOAPMessage soapMessage = messageFactory.createMessage();
-            SOAPPart soapPart = soapMessage.getSOAPPart();
-
-            SOAPEnvelope envelope = soapPart.getEnvelope();
-            envelope.addNamespaceDeclaration("fu", "http://www.fu.gov.si");
-
-            SOAPHeader soapHeader = envelope.getHeader();
-            SOAPBody soapBody = envelope.getBody();
-            SOAPElement echoResponseElement = soapBody.addChildElement("EchoResponse","fu");
-            echoResponseElement.setTextContent(PING_STRING);
-
-            // Setting SOAPAction header line
-            MimeHeaders headers = soapMessage.getMimeHeaders();
-            headers.addHeader("SOAPAction", "/echo");
-
-            soapMessage.saveChanges();
-            soapConnection.call(soapMessage,this.url);
-
-        } catch (SOAPException e) {
-            throw new FursPluginException(e);
-        }
-
+    private Document getSalesBookInvoiceRequest(String uuid, Invoice invoice, Premise premise) throws FursPluginException {
+        return null;
     }
 
     private void setFinalElement(String namespace, String elementName, String elementValue, Document doc, Element parentElement) {
