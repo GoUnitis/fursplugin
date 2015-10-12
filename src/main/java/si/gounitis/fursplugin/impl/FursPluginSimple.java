@@ -1,10 +1,28 @@
+//********************************************************************************
+//
+//    About - About box class
+//
+//    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
+//
+//    This program is free software; you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 2 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//********************************************************************************
+//    Revision history:
+//        12.10.2015: J. Zelic - First Version
+//********************************************************************************
 package si.gounitis.fursplugin.impl;
 
-
-import org.apache.axis2.AxisFault;
-import org.apache.axis2.databinding.types.PositiveInteger;
-import org.apache.axis2.databinding.types.URI;
-import org.w3.www._2000._09.xmldsig.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import si.gounitis.fursplugin.FursObject;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
@@ -13,18 +31,22 @@ import si.gounitis.fursplugin.beans.Invoice;
 import si.gounitis.fursplugin.beans.Premise;
 import si.gounitis.fursplugin.beans.SwProvider;
 import si.gounitis.fursplugin.helpers.Sign;
-import si.gov.fu.www.*;
 
-import javax.activation.DataHandler;
-import javax.mail.util.ByteArrayDataSource;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.*;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.rmi.RemoteException;
-import java.text.ParseException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
 
 /**
  * Created by Jure on 7.10.2015.
@@ -35,210 +57,140 @@ public class FursPluginSimple implements FursPlugin{
     private static int ID_LENGTH=36;
     private static String SOAPProtocol=SOAPConstants.SOAP_1_1_PROTOCOL;
 
+    private static String FU_NAMESPACE="http://www.fu.gov.si/";
+    private static String SIGN_ELEMENT_ID="data";
+
     private String url;
 
     public FursPluginSimple(String url) {
+
         this.url=url;
     }
 
-    public String initPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
-
-        String signElemetId="burek";
+    public void reportPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
 
         checkInput(uuid, premise);
 
         try {
-            FiscalVerificationServiceStub stub = new FiscalVerificationServiceStub(url);
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
 
-            BusinessPremiseRequest businessPremiseRequest = new BusinessPremiseRequest();
-            // set header
-            HeaderType header=new HeaderType();
-            UUIDType uuidt = new UUIDType();
-            uuidt.setUUIDType(uuid);
-            header.setMessageID(uuidt);
-            DateTime date = new DateTime();
-            Calendar now = Calendar.getInstance();
-            date.setDateTime(now);
-            header.setDateTime(date);
-            businessPremiseRequest.setHeader(header);
-            businessPremiseRequest.setBusinessPremise( getPremise (premise));
-            businessPremiseRequest.setId(signElemetId);
-            businessPremiseRequest.setSignature(signPremiseRequest(businessPremiseRequest,  signElemetId));
+            // SOAP Envelope
+            MessageFactory messageFactory = MessageFactory.newInstance(SOAPProtocol);
+            SOAPMessage soapMessage = messageFactory.createMessage();
+            SOAPPart soapPart = soapMessage.getSOAPPart();
 
-            // send it
-            BusinessPremiseResponse businessPremiseResponse = stub.businessPremise(businessPremiseRequest);
+            SOAPEnvelope envelope = soapPart.getEnvelope();
 
-            // check the answer
-            ErrorType error = businessPremiseResponse.getError();
-            SignatureType ResponseSignature = businessPremiseResponse.getSignature();
+            SOAPHeader soapHeader = envelope.getHeader();
+            SOAPBody soapBody = envelope.getBody();
+            Document businessPremiseRequest=getBusinessPremiseRequest(uuid, premise);
+            businessPremiseRequest = Sign.signDocument(businessPremiseRequest, "#" + SIGN_ELEMENT_ID, "signcert");
+            String businessPremiseRequestString = documentToString(businessPremiseRequest);
 
-            return businessPremiseResponse.getId();
+            soapBody.setTextContent(businessPremiseRequestString);
 
-        } catch (AxisFault e) {
-            throw new FursPluginException(e);
-        } catch (RemoteException e) {
+            // Setting SOAPAction header line
+            MimeHeaders headers = soapMessage.getMimeHeaders();
+            headers.addHeader("SOAPAction", "/invoices/register");
+
+            soapMessage.saveChanges();
+            SOAPMessage soapResponse = soapConnection.call(soapMessage, this.url);
+
+            SOAPBody responseBoddy = soapResponse.getSOAPPart().getEnvelope().getBody();
+            SOAPElement businessPremiseRsponseElement = (SOAPElement) responseBoddy.getElementsByTagName("*").item(0);
+
+            Iterator itr = businessPremiseRsponseElement.getChildElements();
+            while(itr.hasNext()) {
+                SOAPElement element = (SOAPElement) itr.next();
+                if ("Error".equals(element.getElementName().getLocalName())) {
+                    NodeList errorCause = element.getElementsByTagName("*");
+                    throw new FursPluginException("Request to FURS returned Error " + ((SOAPElement)errorCause.item(0)).getTextContent()+": "+((SOAPElement)errorCause.item(1)).getTextContent());
+                }
+            }
+
+            return;
+
+        } catch (SOAPException e) {
             throw new FursPluginException(e);
         }
     }
 
-    private BusinessPremiseType getPremise(Premise premise) throws FursPluginException {
-        BusinessPremiseType businessPremise = new BusinessPremiseType();
-
-        TaxNumberType taxNumber = new TaxNumberType();
-        PositiveInteger intTax = new PositiveInteger(premise.getTaxNumber());
-        taxNumber.setTaxNumberType(intTax);
-        businessPremise.setTaxNumber(taxNumber);
-
-        BusinessPremiseIDType premiseID = new BusinessPremiseIDType();
-        premiseID.setBusinessPremiseIDType(premise.getPremiseLabel());
-        businessPremise.setBusinessPremiseID(premiseID);
-
-        BPIdentifierType bpIdentifier = new BPIdentifierType();
-        CadastralData cadastralData = premise.getCadastralData();
-        if (cadastralData != null) { // if real estate - immobile premise
-            RealEstateBPType bp = new RealEstateBPType();
-
-            PropertyIDType pit = new PropertyIDType();
-            CadastralNumber_type1 cn= new CadastralNumber_type1();
-            cn.setCadastralNumber_type0(new BigInteger(cadastralData.getCadastralCommunityNumber()));
-            pit.setCadastralNumber(cn);
-            BuildingNumber_type1 bn = new BuildingNumber_type1();
-            bn.setBuildingNumber_type0(new BigInteger(cadastralData.getCadastralBuildingNumber()));
-            pit.setBuildingNumber(bn);
-            BuildingSectionNumber_type1 sn = new BuildingSectionNumber_type1();
-            sn.setBuildingSectionNumber_type0(new BigInteger(cadastralData.getCadastralBuildingPartNumber()));
-            pit.setBuildingSectionNumber(sn);
-            bp.setPropertyID(pit);
-
-            AddressType at = new AddressType();
-            Street_type1 st = new Street_type1();
-            st.setStreet_type0(premise.getAdress().getStreet());
-            at.setStreet(st);
-            HouseNumber_type1 hn = new HouseNumber_type1();
-            hn.setHouseNumber_type0(premise.getAdress().getNumber());
-            at.setHouseNumber(hn);
-            if (premise.getAdress().getNumberAd()!=null) {
-                HouseNumberAdditional_type1 hna = new HouseNumberAdditional_type1();
-                hna.setHouseNumberAdditional_type0(premise.getAdress().getNumberAd());
-                at.setHouseNumberAdditional(hna);
-            }
-            Community_type1 co = new Community_type1(); //naselje
-            co.setCommunity_type0(premise.getAdress().getTown());
-            at.setCommunity(co); // po�ta
-            City_type1 ci= new City_type1();
-            ci.setCity_type0(premise.getAdress().getPostName());
-            at.setCity(ci);
-            PostalCode_type1 pc = new PostalCode_type1();
-            pc.setPostalCode_type0(premise.getAdress().getPostNumber());
-            at.setPostalCode(pc);
-
-            bp.setAddress(at);
-            bpIdentifier.setRealEstateBP(bp);
-        } else { // if mobile premise - without address and cadastral data
-            if ('A' == premise.getMovablePremise()) {
-                bpIdentifier.setPremiseType(OtherPremiseType.A);
-            } else if ('B' == premise.getMovablePremise()) {
-                bpIdentifier.setPremiseType(OtherPremiseType.B);
-            } else if ('C' == premise.getMovablePremise()) {
-                bpIdentifier.setPremiseType(OtherPremiseType.C);
-            }
-        }
-        businessPremise.setBPIdentifier(bpIdentifier);
+    private Document getBusinessPremiseRequest(String uuid, Premise premise) throws FursPluginException {
 
         try {
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-            java.util.Date javaDate = df.parse(premise.getPremiseValidityDate());
-            Date fursDate = new Date();
-            fursDate.setDate(javaDate);
-            businessPremise.setValidityDate(fursDate);
-        } catch (ParseException e) {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder =  docFactory.newDocumentBuilder();
+
+            Document doc = docBuilder.newDocument();
+            Element rootElement = doc.createElementNS(FU_NAMESPACE,"BusinessPremiseRequest");
+            rootElement.setAttribute("Id",SIGN_ELEMENT_ID);
+            rootElement.setIdAttribute("Id", true);  // sign BusinessPremiseRequest element
+            doc.appendChild(rootElement);
+
+            // <Header>
+            Element headerElement = doc.createElementNS(FU_NAMESPACE, "Header");
+            rootElement.appendChild(headerElement);
+
+            setFinalElement(FU_NAMESPACE, "MessageID", uuid, doc, headerElement);
+
+            DateFormat df = new SimpleDateFormat("2015-MM-dd'T'hh:mm:ss");
+            String date =df.format(new Date());
+            setFinalElement(FU_NAMESPACE, "DateTime", date, doc, headerElement);
+
+            // <BusinessPremise>
+            Element businessPremiseElement = doc.createElementNS(FU_NAMESPACE, "BusinessPremise");
+            rootElement.appendChild(businessPremiseElement);
+            setFinalElement(FU_NAMESPACE, "TaxNumber", premise.getTaxNumber(), doc, businessPremiseElement);
+            setFinalElement(FU_NAMESPACE, "BusinessPremiseID", premise.getPremiseLabel(), doc, businessPremiseElement);
+
+            // <BPIdentifier>
+            Element bPIdentifierElement = doc.createElementNS(FU_NAMESPACE, "BPIdentifier");
+            businessPremiseElement.appendChild(bPIdentifierElement);
+            CadastralData cadastralData = premise.getCadastralData();
+            if (cadastralData != null) { // if real estate - immobile premise
+                Element realEstateBPElement = doc.createElementNS(FU_NAMESPACE, "RealEstateBP");
+                bPIdentifierElement.appendChild(realEstateBPElement);
+
+                Element propertyID = doc.createElementNS(FU_NAMESPACE, "PropertyID");
+                realEstateBPElement.appendChild(propertyID);
+
+                setFinalElement(FU_NAMESPACE, "CadastralNumber", cadastralData.getCadastralCommunityNumber(), doc, propertyID);
+                setFinalElement(FU_NAMESPACE, "BuildingNumber", cadastralData.getCadastralBuildingNumber(), doc, propertyID);
+                setFinalElement(FU_NAMESPACE, "BuildingSectionNumber", cadastralData.getCadastralBuildingPartNumber(), doc, propertyID);
+
+                Element addressElement = doc.createElementNS(FU_NAMESPACE, "Address");
+                realEstateBPElement.appendChild(addressElement);
+
+                setFinalElement(FU_NAMESPACE, "Street", premise.getAdress().getStreet(), doc, addressElement);
+                setFinalElement(FU_NAMESPACE, "HouseNumber", premise.getAdress().getNumber(), doc, addressElement);
+                if (premise.getAdress().getNumberAd()!=null) setFinalElement(FU_NAMESPACE, "HouseNumberAdditional", premise.getAdress().getNumberAd(), doc, addressElement);
+                setFinalElement(FU_NAMESPACE, "Community", premise.getAdress().getPostName(), doc, addressElement);
+                setFinalElement(FU_NAMESPACE, "PostalCode", premise.getAdress().getPostNumber(), doc, addressElement);
+                setFinalElement(FU_NAMESPACE, "City", premise.getAdress().getTown(), doc, addressElement);
+            } else {
+                setFinalElement(FU_NAMESPACE, "PremiseType", ""+premise.getMovablePremise(), doc, bPIdentifierElement);
+            }
+
+            setFinalElement(FU_NAMESPACE, "ValidityDate",premise.getPremiseValidityDate(), doc, businessPremiseElement);
+
+            Element softwareSupplier = doc.createElementNS(FU_NAMESPACE, "SoftwareSupplier");
+            businessPremiseElement.appendChild(softwareSupplier);
+            SwProvider swProvider = premise.getSwProvider();
+            if (swProvider.getVat()!=null) {
+                setFinalElement(FU_NAMESPACE, "TaxNumber",swProvider.getVat(), doc, softwareSupplier);
+            } else {
+                setFinalElement(FU_NAMESPACE, "NameForeign",swProvider.getTitle(), doc, softwareSupplier);
+            }
+
+            setFinalElement(FU_NAMESPACE, "SpecialNotes",premise.getAux(), doc, businessPremiseElement);
+
+            return doc;
+
+        } catch (ParserConfigurationException e) {
             throw new FursPluginException(e);
         }
 
-
-        if (premise.getClosePremise()) businessPremise.setClosingTag(ClosingTagType.Z);
-
-        SwProvider swProvider = premise.getSwProvider();
-        SoftwareSupplierType swSuplier = new SoftwareSupplierType();
-        if (swProvider.getVat()!=null) {
-            TaxNumberType tn = new TaxNumberType();
-            PositiveInteger pi = new PositiveInteger(swProvider.getVat());
-            tn.setTaxNumberType(pi);
-            swSuplier.setTaxNumber(tn);
-        } else if (swProvider.getTitle()!=null) {
-            NameForeign_type1 nf = new NameForeign_type1();
-            nf.setNameForeign_type0(swProvider.getTitle());
-            swSuplier.setNameForeign(nf);
-        }
-        businessPremise.addSoftwareSupplier(swSuplier);
-
-        String aux = premise.getAux();
-        if (aux != null) {
-            SpecialNotes_type5 sn = new SpecialNotes_type5();
-            sn.setSpecialNotes_type4(aux);
-            businessPremise.setSpecialNotes(sn);
-        }
-
-        return businessPremise;
-    }
-
-    private SignatureType signPremiseRequest(BusinessPremiseRequest businessPremiseRequest, String id) throws FursPluginException {
-        SignatureType requestSinature = new SignatureType();
-
-        SignatureValueType svt = new SignatureValueType();
-
-        String signature="QCZyHtQi3PF7sFS0/vlbaHy1kNUr7B/SII6eqT9sUznm8Zm7xGu88J+Kvqei7lC/YhxIXoLPVay7Y+9d\n" +
-                "PM729GPaldETkWEZaiPXhHIuWT/0VfPohFW7qet5Ar4N2uvtKygztiOtjABl3jPacrdjgqERbIjc/bF3q8dEOHqcKn/i6TVor\n" +
-                "ObDEXnA0ZmAdmr4Q11f3nxo7P6dDaLmZzhvmNGniHN/B+NmAaZcb2d/NmQn\n" +
-                "SCn1GB58y42rgka/LoltL0iN9gqyRgn\n" +
-                "oV4QXLkJj7tRsXTMywmZqKaa5F8VIlx6mvgw5rhkBSVU5Qnu+2qg6v0kfR46Tpm7vIodR8YkTsw==";
-        DataHandler dh = new DataHandler(new ByteArrayDataSource(signature.getBytes(StandardCharsets.UTF_8),"utf-8"));
-        svt.setBase64Binary(dh);
-        requestSinature.setSignatureValue(svt);
-
-        requestSinature.setSignedInfo(setSignatureInfo());
-        requestSinature.setKeyInfo(getKeyInfo());
-        return requestSinature;
-    }
-
-    private KeyInfoType getKeyInfo() {
-        KeyInfoType ki = new KeyInfoType();
-        KeyInfoTypeChoice kitc = new KeyInfoTypeChoice();
-        X509DataType x509d = new X509DataType();
-        X509DataTypeSequence x509ds = new X509DataTypeSequence();
-        X509DataTypeChoice_type0 x509dc = new X509DataTypeChoice_type0();
-        x509dc.setX509SubjectName("CN=TESTNO PODJETJE 182,SERIALNUMBER=1,OU=10075623,OU=DavPotRacTEST,O=state-institutions,C=SI");
-        x509ds.setX509DataTypeChoice_type0(x509dc);
-        x509d.addX509DataTypeSequence(x509ds);
-        kitc.setX509Data(x509d);
-        ki.addKeyInfoTypeChoice(kitc);
-        return ki;
-    }
-
-    private SignedInfoType setSignatureInfo() throws FursPluginException {
-
-        try {
-            SignedInfoType sit = new SignedInfoType();
-            CanonicalizationMethodType cmt = new CanonicalizationMethodType();
-            cmt.setAlgorithm(new URI(Sign.getCanonicalizationMethod()));
-            sit.setCanonicalizationMethod(cmt);
-            SignatureMethodType smt = new SignatureMethodType();
-            smt.setAlgorithm(new URI(Sign.getSignatureMethod()));
-            sit.setSignatureMethod(smt);
-            ReferenceType ref = new ReferenceType();
-            DigestMethodType dm = new DigestMethodType();
-            dm.setAlgorithm(new URI(Sign.getDigestMethod()));
-            ref.setDigestMethod(dm);
-            ref.setURI(new URI("#burek"));
-            DigestValueType dv = new DigestValueType();
-            DataHandler dh = new DataHandler(new ByteArrayDataSource("0BpBFww14RJoiKeMwl5KnaR0DPGiRM0gUbfPETqgUgc=".getBytes(StandardCharsets.UTF_8),"utf-8"));
-            dv.setDigestValueType(dh);
-            ref.setDigestValue(dv);
-            sit.addReference(ref);
-            return sit;
-        } catch (URI.MalformedURIException e) {
-            throw new FursPluginException(e);
-        }
     }
 
     public String issueInvoice(String id, Invoice invoice, String signingCertAlias) throws FursPluginException{
@@ -249,6 +201,7 @@ public class FursPluginSimple implements FursPlugin{
     }
 
     public void ping() throws FursPluginException{
+
         try {
             SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
             SOAPConnection soapConnection = soapConnectionFactory.createConnection();
@@ -260,13 +213,9 @@ public class FursPluginSimple implements FursPlugin{
 
             SOAPEnvelope envelope = soapPart.getEnvelope();
             envelope.addNamespaceDeclaration("fu", "http://www.fu.gov.si");
-            //envelope.addNamespaceDeclaration("xsd", "http://www.w3.org/2001/XMLSchema");
-            //envelope.addNamespaceDeclaration("ds", "http://www.w3.org/2000/09/xmldsig#");
-            //envelope.addNamespaceDeclaration("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
             SOAPHeader soapHeader = envelope.getHeader();
-            SOAPBody soapBody = envelope.getBody();;
-            //soapBody.setTextContent("<fu:EchoResponse>" + PING_STRING + "</fu:EchoResponse>");
+            SOAPBody soapBody = envelope.getBody();
             SOAPElement echoResponseElement = soapBody.addChildElement("EchoResponse","fu");
             echoResponseElement.setTextContent(PING_STRING);
 
@@ -283,13 +232,32 @@ public class FursPluginSimple implements FursPlugin{
 
     }
 
-    private void printSoapMsg(SOAPMessage msg)  {
-        // debug
-        try {
-            System.out.print(" SOAP Message:");
-            msg.writeTo(System.out);
-        } catch (Exception e) {}
+    private void setFinalElement(String namespace, String elementName, String elementValue, Document doc, Element parentElement) {
 
+        Element element;
+        if (namespace==null) {
+            element = doc.createElement(elementName);
+        } else {
+            element = doc.createElementNS(FU_NAMESPACE, elementName);
+        }
+        element.setTextContent(elementValue);
+        parentElement.appendChild(element);
+    }
+
+    private String documentToString(Document doc) throws FursPluginException {
+
+        try {
+            DOMSource domSource = new DOMSource(doc);
+            StringWriter writer = new StringWriter();
+            StreamResult result = new StreamResult(writer);
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.transform(domSource, result);
+            return writer.toString();
+        } catch (TransformerException e) {
+           throw new FursPluginException(e);
+        }
     }
 
     private void checkInput(String id, FursObject obj) throws FursPluginException{
@@ -297,5 +265,13 @@ public class FursPluginSimple implements FursPlugin{
             return;
         }
         throw new FursPluginException("Not valid arguments");
+    }
+
+    private void printSoapMsg(SOAPMessage msg)  {
+        try {
+            System.out.print(" SOAP Message:");
+            msg.writeTo(System.out);
+        } catch (Exception e) {}
+
     }
 }

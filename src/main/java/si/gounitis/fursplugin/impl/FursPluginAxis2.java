@@ -1,5 +1,24 @@
+//********************************************************************************
+//
+//    About - About box class
+//
+//    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
+//
+//    This program is free software; you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 2 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//********************************************************************************
+//    Revision history:
+//        12.10.2015: J. Zelic - First Version
+//********************************************************************************
 package si.gounitis.fursplugin.impl;
-
 
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.databinding.types.PositiveInteger;
@@ -14,7 +33,6 @@ import si.gov.fu.www.*;
 
 import javax.activation.DataHandler;
 import javax.mail.util.ByteArrayDataSource;
-import javax.xml.soap.SOAPMessage;
 import java.math.BigInteger;
 import org.apache.axis2.databinding.types.URI;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +55,7 @@ public class FursPluginAxis2 implements FursPlugin{
         this.url=url;
     }
 
-    public String initPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
+    public void reportPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
 
         String signElemetId="burek";
 
@@ -68,7 +86,7 @@ public class FursPluginAxis2 implements FursPlugin{
             ErrorType error = businessPremiseResponse.getError();
             SignatureType ResponseSignature = businessPremiseResponse.getSignature();
 
-            return businessPremiseResponse.getId();
+            return;
 
         } catch (AxisFault e) {
             throw new FursPluginException(e);

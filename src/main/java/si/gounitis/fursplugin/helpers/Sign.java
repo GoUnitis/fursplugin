@@ -1,7 +1,26 @@
+//********************************************************************************
+//
+//    About - About box class
+//
+//    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
+//
+//    This program is free software; you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 2 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//********************************************************************************
+//    Revision history:
+//        12.10.2015: J. Zelic - First Version
+//********************************************************************************
 package si.gounitis.fursplugin.helpers;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import si.gounitis.fursplugin.FursPluginException;
 
 import javax.xml.crypto.MarshalException;
@@ -16,9 +35,8 @@ import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import org.w3c.dom.Element;
 
 import java.io.*;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +53,7 @@ public class Sign {
     private static String CANONICALIZATION_METHOD = CanonicalizationMethod.INCLUSIVE;
 
     // referenceUri = "" for signig whole document
-    public static Document signDocument(Document doc, String referenceUri, String keystoreAlias) throws Exception {
+    public static Document signDocument(Document doc, String referenceUri, String keystoreAlias) throws FursPluginException {
         XMLSignatureFactory fac;
         X509Certificate cert;
         KeyStore.PrivateKeyEntry keyEntry;
@@ -88,6 +106,7 @@ public class Sign {
 
             // Output the resulting document.
             return doc;
+
         } catch (XMLSignatureException e) {
             throw new FursPluginException(e);
         } catch (MarshalException e) {
@@ -95,6 +114,16 @@ public class Sign {
         } catch (InvalidAlgorithmParameterException e) {
             throw new FursPluginException(e);
         } catch (NoSuchAlgorithmException e) {
+            throw new FursPluginException(e);
+        } catch (CertificateException e) {
+            throw new FursPluginException(e);
+        } catch (KeyStoreException e) {
+            throw new FursPluginException(e);
+        } catch (FileNotFoundException e) {
+            throw new FursPluginException(e);
+        } catch (UnrecoverableEntryException e) {
+            throw new FursPluginException(e);
+        } catch (IOException e) {
             throw new FursPluginException(e);
         }
     }
@@ -110,8 +139,12 @@ public class Sign {
         x509IssuerName.insertBefore(doc.createTextNode("CN=Tax CA Test,O=state-institutions,C=SI"), x509IssuerName.getLastChild()); //todo from cert
         x509IssuerSerial.appendChild(x509IssuerName);
         Element x509SerialNumber = doc.createElement("X509SerialNumber");
-        x509SerialNumber.insertBefore(doc.createTextNode("7377981114232509707"), x509SerialNumber.getLastChild()); //todo from cert
+        x509SerialNumber.setTextContent("7377981114232509707"); //todo from cert
         x509IssuerSerial.appendChild(x509SerialNumber);
+
+        //todo kva naj s tem - verjetno ni potrebno
+        //Element x509SubjectName = (Element) x509Data.getElementsByTagName("X509SubjectName").item(0);
+        //x509SubjectName.setTextContent("CN=TESTNO PODJETJE 182,SERIALNUMBER=1,OU=10075623,OU=DavPotRacTEST,O=state-institutions,C=SI");
     }
 
     private static void deleteX509CertificateElement(Document doc) {
