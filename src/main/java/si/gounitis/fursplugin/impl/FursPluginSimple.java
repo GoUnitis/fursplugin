@@ -116,6 +116,55 @@ public class FursPluginSimple implements FursPlugin{
         }
     }
 
+    public String issueInvoice(String uuid, Invoice invoice, Premise premise, String signingCertAlias) throws FursPluginException{
+
+        checkInput(uuid, invoice);
+
+        try {
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+            // SOAP Envelope
+            MessageFactory messageFactory = MessageFactory.newInstance(SOAPProtocol);
+            SOAPMessage soapMessage = messageFactory.createMessage();
+            SOAPPart soapPart = soapMessage.getSOAPPart();
+
+            SOAPEnvelope envelope = soapPart.getEnvelope();
+
+            SOAPHeader soapHeader = envelope.getHeader();
+            SOAPBody soapBody = envelope.getBody();
+            Document invoiceRequest=getInvoiceRequest(uuid, invoice, premise);
+            invoiceRequest = Sign.signDocument(invoiceRequest, "#" + SIGN_ELEMENT_ID, "signcert");
+            String invoiceRequestString = documentToString(invoiceRequest);
+
+            soapBody.setTextContent(invoiceRequestString);
+
+            // Setting SOAPAction header line
+            MimeHeaders headers = soapMessage.getMimeHeaders();
+            headers.addHeader("SOAPAction", "/invoices");
+
+            soapMessage.saveChanges();
+            SOAPMessage soapResponse = soapConnection.call(soapMessage, this.url);
+
+            SOAPBody responseBoddy = soapResponse.getSOAPPart().getEnvelope().getBody();
+            SOAPElement businessPremiseRsponseElement = (SOAPElement) responseBoddy.getElementsByTagName("*").item(0);
+
+            Iterator itr = businessPremiseRsponseElement.getChildElements();
+            while(itr.hasNext()) {
+                SOAPElement element = (SOAPElement) itr.next();
+                if ("Error".equals(element.getElementName().getLocalName())) {
+                    NodeList errorCause = element.getElementsByTagName("*");
+                    throw new FursPluginException("Request to FURS returned Error " + ((SOAPElement)errorCause.item(0)).getTextContent()+": "+((SOAPElement)errorCause.item(1)).getTextContent());
+                }
+            }
+
+            return null;
+
+        } catch (SOAPException e) {
+            throw new FursPluginException(e);
+        }
+    }
+
     private Document getBusinessPremiseRequest(String uuid, Premise premise) throws FursPluginException {
 
         try {
@@ -193,11 +242,37 @@ public class FursPluginSimple implements FursPlugin{
 
     }
 
-    public String issueInvoice(String id, Invoice invoice, String signingCertAlias) throws FursPluginException{
+    private Document getInvoiceRequest(String uuid, Invoice invoice, Premise premise) throws FursPluginException {
+        try {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder =  docFactory.newDocumentBuilder();
 
-        checkInput(id, invoice);
+            Document doc = docBuilder.newDocument();
+            Element rootElement = doc.createElementNS(FU_NAMESPACE,"InvoiceRequest");
+            rootElement.setAttribute("Id",SIGN_ELEMENT_ID);
+            rootElement.setIdAttribute("Id", true);  // sign BusinessPremiseRequest element
+            doc.appendChild(rootElement);
 
-        return null;
+            // <Header>
+            Element headerElement = doc.createElementNS(FU_NAMESPACE, "Header");
+            rootElement.appendChild(headerElement);
+
+            setFinalElement(FU_NAMESPACE, "MessageID", uuid, doc, headerElement);
+
+            DateFormat df = new SimpleDateFormat("2015-MM-dd'T'hh:mm:ss");
+            String date =df.format(new Date());
+            setFinalElement(FU_NAMESPACE, "DateTime", date, doc, headerElement);
+
+            // <Invoice>
+            Element invoiceElement = doc.createElementNS(FU_NAMESPACE, "BusinessPremise");
+            rootElement.appendChild(invoiceElement);
+            setFinalElement(FU_NAMESPACE, "TaxNumber", premise.getTaxNumber(), doc, invoiceElement);
+
+            return doc;
+        } catch (ParserConfigurationException e) {
+            throw new FursPluginException(e);
+        }
+
     }
 
     public void ping() throws FursPluginException{

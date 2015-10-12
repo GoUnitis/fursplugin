@@ -95,6 +95,29 @@ public class FursPluginAxis2 implements FursPlugin{
         }
     }
 
+    public String issueInvoice(String uuid, Invoice invoice, Premise premise, String signingCertAlias) throws FursPluginException{
+
+        checkInput(uuid, invoice);
+
+        return null;
+    }
+
+    public void ping() throws FursPluginException{
+        try {
+            FiscalVerificationServiceStub stub = new FiscalVerificationServiceStub(url);
+
+            EchoRequest echoRequest = new EchoRequest();
+            echoRequest.setEchoRequest(PING_STRING);
+            EchoResponse echoResponse= stub.echo(echoRequest);
+            echoResponse.getEchoResponse();
+
+        } catch (AxisFault e) {
+            throw new FursPluginException(e);
+        } catch (RemoteException e) {
+            throw new FursPluginException(e);
+        }
+    }
+
     private BusinessPremiseType getPremise(Premise premise) throws FursPluginException {
         BusinessPremiseType businessPremise = new BusinessPremiseType();
 
@@ -251,29 +274,6 @@ public class FursPluginAxis2 implements FursPlugin{
             sit.addReference(ref);
             return sit;
         } catch (URI.MalformedURIException e) {
-            throw new FursPluginException(e);
-        }
-    }
-
-    public String issueInvoice(String id, Invoice invoice, String signingCertAlias) throws FursPluginException{
-
-        checkInput(id, invoice);
-
-        return null;
-    }
-
-    public void ping() throws FursPluginException{
-        try {
-            FiscalVerificationServiceStub stub = new FiscalVerificationServiceStub(url);
-
-            EchoRequest echoRequest = new EchoRequest();
-            echoRequest.setEchoRequest(PING_STRING);
-            EchoResponse echoResponse= stub.echo(echoRequest);
-            echoResponse.getEchoResponse();
-
-        } catch (AxisFault e) {
-            throw new FursPluginException(e);
-        } catch (RemoteException e) {
             throw new FursPluginException(e);
         }
     }

@@ -25,7 +25,7 @@ import org.junit.runners.Suite;
 
 //JUnit Suite Test
 @RunWith(Suite.class)
-@Suite.SuiteClasses({TestPing.class, TestPing.class, TestPremise.class
+@Suite.SuiteClasses({TestPing.class, TestSign.class, TestPremise.class, TestInvoice.class
 })
 public class JunitTestSuite {
 }
