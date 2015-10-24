@@ -141,8 +141,8 @@ public class Sign {
         x509IssuerSerial.appendChild(x509SerialNumber);
 
         //todo kva naj s tem - verjetno ni potrebno
-        //Element x509SubjectName = (Element) x509Data.getElementsByTagName("X509SubjectName").item(0);
-        //x509SubjectName.setTextContent("CN=TESTNO PODJETJE 182,SERIALNUMBER=1,OU=10075623,OU=DavPotRacTEST,O=state-institutions,C=SI");
+        Element x509SubjectName = (Element) x509Data.getElementsByTagName("X509SubjectName").item(0);
+        x509SubjectName.setTextContent("CN=TESTNO PODJETJE 182,SERIALNUMBER=1,OU=10075623,OU=DavPotRacTEST,O=state-institutions,C=SI");
     }
 
     private static void deleteX509CertificateElement(Document doc) {
@@ -152,7 +152,6 @@ public class Sign {
         Element x509Data = (Element) keyInfo.getElementsByTagName("X509Data").item(0);
         Element x509Certificate = (Element) x509Data.getElementsByTagName("X509Certificate").item(0);
         x509Certificate.getParentNode().removeChild(x509Certificate);
-        System.out.println();
     }
 
     public static String getDigestMethod() {
