@@ -21,6 +21,7 @@ package si.gounitis.fursplugin.helpers;
 import java.util.Random;
 
 public class Tools {
+    private static Random random=null;
 
     /**
      * generate unique message ID
@@ -28,11 +29,19 @@ public class Tools {
      * @return unique message ID
      */
     public static String getNewUiid(){
-        Random random = new Random();
-        return Integer.toHexString(random.nextInt(0xffff))+Integer.toHexString(random.nextInt(0xffff))+"-"+
-                Integer.toHexString(random.nextInt(0xffff))+"-"+
-                Integer.toHexString(random.nextInt(0xffff))+"-"+
-                Integer.toHexString(random.nextInt(0xffff))+"-"+
-                Integer.toHexString(random.nextInt(0xffff))+Integer.toHexString(random.nextInt(0xffff))+Integer.toHexString(random.nextInt(0xffff));
+        return getRandomFourDigitHexString()+getRandomFourDigitHexString()+"-"+
+                getRandomFourDigitHexString()+"-"+
+                getRandomFourDigitHexString()+"-"+
+                getRandomFourDigitHexString()+"-"+
+                getRandomFourDigitHexString()+getRandomFourDigitHexString()+getRandomFourDigitHexString();
+    }
+
+    private static String getRandomFourDigitHexString() {
+        if (random==null) {
+            random = new Random();
+        }
+        String rv = Integer.toHexString(random.nextInt(0xffff));
+        rv = String.format("%4s", rv).replace(' ', '0');
+        return rv;
     }
 }

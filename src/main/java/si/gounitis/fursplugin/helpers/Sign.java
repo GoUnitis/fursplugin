@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class Sign {
     private static String DIGEST_METHOD = DigestMethod.SHA256;
-    // private static String SIGNATURE_METHOD = SignatureMethod.RSA_SHA1;
+    //private static String SIGNATURE_METHOD = SignatureMethod.RSA_SHA1;
     private static String SIGNATURE_METHOD = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
     private static String SIGNATURE_TYPE = Transform.ENVELOPED;
     private static String CANONICALIZATION_METHOD = CanonicalizationMethod.INCLUSIVE;
@@ -137,7 +137,7 @@ public class Sign {
         x509IssuerName.insertBefore(doc.createTextNode("CN=Tax CA Test,O=state-institutions,C=SI"), x509IssuerName.getLastChild()); //todo from cert
         x509IssuerSerial.appendChild(x509IssuerName);
         Element x509SerialNumber = doc.createElement("X509SerialNumber");
-        x509SerialNumber.setTextContent("7377981114232509707"); //todo from cert
+        x509SerialNumber.setTextContent("4875718202974437711"); //todo from cert
         x509IssuerSerial.appendChild(x509SerialNumber);
 
         //todo kva naj s tem - verjetno ni potrebno
