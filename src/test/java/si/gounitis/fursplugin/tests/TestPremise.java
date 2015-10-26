@@ -39,8 +39,8 @@ public class TestPremise {
 
     @Test
     public void testPremiseRealEstate() {
-        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9001/v1/cash_registers");
-        //FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        //FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9001/v1/cash_registers");
+        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
         //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
 
         Premise premise=new Premise();

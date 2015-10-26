@@ -31,6 +31,7 @@ public class TestPing {
     @Test
     public void testPing() {
 
+        //FursPlugin plugin = new FursPluginSimple("https://blagajne-test.fu.gov.si:9001/v1/cash_registers");
         FursPlugin plugin = new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
         //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
 

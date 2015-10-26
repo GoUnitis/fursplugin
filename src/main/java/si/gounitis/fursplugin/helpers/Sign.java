@@ -27,6 +27,7 @@ import javax.xml.crypto.dsig.dom.DOMSignContext;
 import javax.xml.crypto.dsig.keyinfo.KeyInfo;
 import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
 import javax.xml.crypto.dsig.keyinfo.X509Data;
+import javax.xml.crypto.dsig.keyinfo.X509IssuerSerial;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 
@@ -78,13 +79,15 @@ public class Sign {
             if (keyEntry==null) {
                 throw new FursPluginException ("Kea pair "+keystoreAlias+" not found in "+keyStore);
             }
-            cert = (X509Certificate) keyEntry.getCertificate();
 
             // Create the KeyInfo containing the X509Data.
             KeyInfoFactory kif = fac.getKeyInfoFactory();
+            cert = (X509Certificate) keyEntry.getCertificate();
+            X509IssuerSerial ser = kif.newX509IssuerSerial(cert.getIssuerX500Principal().getName(), cert.getSerialNumber());
             List x509Content = new ArrayList();
-            x509Content.add(cert.getSubjectX500Principal().getName());
             x509Content.add(cert);
+            x509Content.add(ser);
+            x509Content.add(cert.getSubjectX500Principal().getName());
             X509Data xd = kif.newX509Data(x509Content);
             ki = kif.newKeyInfo(Collections.singletonList(xd));
 
@@ -97,10 +100,6 @@ public class Sign {
 
             // Marshal, generate, and sign the enveloped signature.
             signature.sign(dsc);
-
-            // trimming the signature to fit FURS reqirenments
-            deleteX509CertificateElement(doc);
-            addIssuerData(doc);
 
             // Output the resulting document.
             return doc;
@@ -124,34 +123,6 @@ public class Sign {
         } catch (IOException e) {
             throw new FursPluginException(e);
         }
-    }
-
-    private static void addIssuerData(Document doc) {
-        doc.getDocumentElement().normalize();
-        Element signature = (Element) doc.getElementsByTagName("Signature").item(0);
-        Element keyInfo = (Element) signature.getElementsByTagName("KeyInfo").item(0);
-        Element x509Data = (Element) keyInfo.getElementsByTagName("X509Data").item(0);
-        Element x509IssuerSerial = doc.createElement("X509IssuerSerial");
-        x509Data.appendChild(x509IssuerSerial);
-        Element x509IssuerName = doc.createElement("X509IssuerName");
-        x509IssuerName.insertBefore(doc.createTextNode("CN=Tax CA Test,O=state-institutions,C=SI"), x509IssuerName.getLastChild()); //todo from cert
-        x509IssuerSerial.appendChild(x509IssuerName);
-        Element x509SerialNumber = doc.createElement("X509SerialNumber");
-        x509SerialNumber.setTextContent("4875718202974437711"); //todo from cert
-        x509IssuerSerial.appendChild(x509SerialNumber);
-
-        //todo kva naj s tem - verjetno ni potrebno
-        Element x509SubjectName = (Element) x509Data.getElementsByTagName("X509SubjectName").item(0);
-        x509SubjectName.setTextContent("CN=TESTNO PODJETJE 182,SERIALNUMBER=1,OU=10075623,OU=DavPotRacTEST,O=state-institutions,C=SI");
-    }
-
-    private static void deleteX509CertificateElement(Document doc) {
-        doc.getDocumentElement().normalize();
-        Element signature = (Element) doc.getElementsByTagName("Signature").item(0);
-        Element keyInfo = (Element) signature.getElementsByTagName("KeyInfo").item(0);
-        Element x509Data = (Element) keyInfo.getElementsByTagName("X509Data").item(0);
-        Element x509Certificate = (Element) x509Data.getElementsByTagName("X509Certificate").item(0);
-        x509Certificate.getParentNode().removeChild(x509Certificate);
     }
 
     public static String getDigestMethod() {

@@ -27,8 +27,8 @@ public class TestRunner {
         Result result = JUnitCore.runClasses(
                 // TestSign.class
                 //,TestPing.class
-                //,TestPremise.class
-                TestInvoice.class
+                TestPremise.class
+                //TestInvoice.class
                 );
         for (Failure failure : result.getFailures()) {
             System.out.println(failure.toString());

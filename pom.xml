@@ -54,12 +54,7 @@
       <artifactId>wsdl4j</artifactId>
       <version>${axis2.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.neethi</groupId>
-      <artifactId>neethi</artifactId>
-      <version>3.0.2</version>
-    </dependency>
-    
+
     <!-- TEST -->
     <dependency>
       <groupId>junit</groupId>

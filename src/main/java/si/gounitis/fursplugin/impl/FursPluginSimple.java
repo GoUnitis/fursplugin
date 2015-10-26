@@ -20,7 +20,6 @@ package si.gounitis.fursplugin.impl;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import si.gounitis.fursplugin.FursObject;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
@@ -30,6 +29,7 @@ import si.gounitis.fursplugin.beans.Premise;
 import si.gounitis.fursplugin.beans.SwProvider;
 import si.gounitis.fursplugin.helpers.Sign;
 
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,6 +42,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -51,7 +53,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -61,19 +63,23 @@ public class FursPluginSimple implements FursPlugin{
 
     private static final String PING_STRING="Mnogo let za tem, ko je Polkovnik Aureliano Buendia";
     private static final int ID_LENGTH=36;
-    private static final String SOAPProtocol=SOAPConstants.SOAP_1_1_PROTOCOL;
 
     private static final String FU_NAMESPACE="http://www.fu.gov.si/";
+    private static final String FU_NAMESPACE_PREFIX="fu";
     private static final String SIGN_ELEMENT_ID="data";
 
     private static final String SOAP_PREPEND = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xd=\"http://www.w3.org/2000/09/xmldsig#\">\n" +
             "\t<soapenv:Body>";
-    private static final String SOAP_APEND ="\t</soapenv:Body>\n" +
+    private static final String SOAP_APPEND ="\t</soapenv:Body>\n" +
             "</soapenv:Envelope>";
 
     private String url;
 
+    /**
+     * Constructor
+      * @param url - webservice URL address
+     */
     public FursPluginSimple(String url) {
 
         this.url=url;
@@ -85,28 +91,84 @@ public class FursPluginSimple implements FursPlugin{
      * @param uuid - unique message ID (could be genertebd by si.gounitis.fursplugin.helpers.Tools.getNewUiid()
      * @param premise - premise data POJO
      * @param signingCertAlias - name of signing certificate in a keystore
-     * @@return
      */
     public void registerPremise(String uuid, Premise premise, String signingCertAlias) throws FursPluginException {
 
         checkInput(uuid, premise);
 
+        Document businessPremiseRequest=getBusinessPremiseRequest(uuid, premise);
+        Document signedBusinessPremiseRequest = Sign.signDocument(businessPremiseRequest, "#"+SIGN_ELEMENT_ID, "signcert");
+
         try {
-            Document businessPremiseRequest=getBusinessPremiseRequest(uuid, premise);
-            Document signedBusinessPremiseRequest = Sign.signDocument(businessPremiseRequest, "#"+SIGN_ELEMENT_ID, "signcert");
-            String httpPayload=SOAP_PREPEND+documentToString(signedBusinessPremiseRequest)+SOAP_APEND;
+            //First create the connection
+            SOAPConnectionFactory soapConnFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection connection = soapConnFactory.createConnection();
 
-            Map<String, String> httpHeaders= new HashMap<String, String>();
-            httpHeaders.put("Content-Type","text/xml; charset=UTF-8");
-            httpHeaders.put("SOAPAction","/invoices/register");
+            //Next, create the actual message
+            MessageFactory messageFactory = MessageFactory.newInstance();
+            SOAPMessage soapMessage = messageFactory.createMessage();
 
-            String soapResponse = httpPost(this.url, httpHeaders, httpPayload);
+            // Create objects for the message parts
+            SOAPPart soapPart = soapMessage.getSOAPPart();
+            SOAPEnvelope envelope = soapPart.getEnvelope();
 
-            return;
+            // remove Header from SOAP message
+            envelope.getHeader().detachNode();
+
+            SOAPBody body = envelope.getBody();
+
+            //Populate the Message
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            dbFactory.setNamespaceAware(true);
+
+            // Setting SOAPAction header line
+            MimeHeaders headers = soapMessage.getMimeHeaders();
+            headers.addHeader("SOAPAction", "/invoices/register");
+
+            // Add xml document SOAP to body
+            body.addDocument(signedBusinessPremiseRequest);
+            soapMessage.saveChanges();
+
+            //Set the destination
+            URL destination = new URL(this.url);
+
+            System.out.println("\nREQUEST:\n");
+            soapMessage.writeTo(System.out);
+            parsePremiseResponse(soapMessage);
+
+            // Send the message
+            SOAPMessage reply = connection.call(soapMessage, destination);
+
+
+
+
+            System.out.println("\nREQUEST:\n");
+            reply.writeTo(System.out);
+            parsePremiseResponse(reply);
+
+
+
+
+            connection.close();
 
         } catch (IOException e) {
             throw new FursPluginException(e);
+        } catch (SOAPException e) {
+            throw new FursPluginException(e);
         }
+
+    }
+
+    private void parsePremiseResponse(SOAPMessage reply) throws FursPluginException {
+        try {
+            SOAPPart soapPart = reply.getSOAPPart();
+            SOAPEnvelope envelope = soapPart.getEnvelope();
+            SOAPBody body = envelope.getBody();
+            Document businessPremiseResponse = body.getOwnerDocument();
+        }  catch (SOAPException e) {
+            throw new FursPluginException(e);
+        }
+
     }
 
     /**
@@ -120,91 +182,51 @@ public class FursPluginSimple implements FursPlugin{
      * @return invoice ID
      */
     public String issueInvoice(String uuid, Invoice invoice, boolean salesBook, Premise premise, String signingCertAlias) throws FursPluginException{
-
         checkInput(uuid, invoice);
 
         try {
-            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
-            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+            Document invoiceRequest=getInvoiceRequest(uuid, invoice, premise);
+            Document signedInvoiceRequest = Sign.signDocument(invoiceRequest, "#"+SIGN_ELEMENT_ID, "signcert");
+            String httpPayload=SOAP_PREPEND+documentToString(signedInvoiceRequest)+SOAP_APPEND;
 
-            // SOAP Envelope
-            MessageFactory messageFactory = MessageFactory.newInstance(SOAPProtocol);
-            SOAPMessage soapMessage = messageFactory.createMessage();
-            SOAPPart soapPart = soapMessage.getSOAPPart();
+            Map<String, String> httpHeaders= new HashMap<String, String>();
+            httpHeaders.put("Content-Type","text/xml; charset=UTF-8");
+            httpHeaders.put("SOAPAction","/invoices");
 
-            SOAPEnvelope envelope = soapPart.getEnvelope();
+            String soapResponse = httpPost(this.url, httpHeaders, httpPayload);
 
-            SOAPHeader soapHeader = envelope.getHeader();
-            SOAPBody soapBody = envelope.getBody();
-            Document invoiceRequest;
-            if (salesBook) {
-                invoiceRequest = getSalesBookInvoiceRequest(uuid, invoice, premise);
-            } else {
-                invoiceRequest = getInvoiceRequest(uuid, invoice, premise);
-            }
-            invoiceRequest = Sign.signDocument(invoiceRequest, "#" + SIGN_ELEMENT_ID, "signcert");
-            String invoiceRequestString = documentToString(invoiceRequest);
-
-            soapBody.setTextContent(invoiceRequestString);
-
-            // Setting SOAPAction header line
-            MimeHeaders headers = soapMessage.getMimeHeaders();
-            headers.addHeader("SOAPAction", "/invoices");
-
-            soapMessage.saveChanges();
-            SOAPMessage soapResponse = soapConnection.call(soapMessage, this.url);
-
-            SOAPBody responseBoddy = soapResponse.getSOAPPart().getEnvelope().getBody();
-            SOAPElement businessPremiseRsponseElement = (SOAPElement) responseBoddy.getElementsByTagName("*").item(0);
-
-            Iterator itr = businessPremiseRsponseElement.getChildElements();
-            while(itr.hasNext()) {
-                SOAPElement element = (SOAPElement) itr.next();
-                if ("Error".equals(element.getElementName().getLocalName())) {
-                    NodeList errorCause = element.getElementsByTagName("*");
-                    throw new FursPluginException("Request to FURS returned Error " + ((SOAPElement)errorCause.item(0)).getTextContent()+": "+((SOAPElement)errorCause.item(1)).getTextContent());
-                }
-            }
+            // check signature
+            // todo
+            // check error value
+            // todo
+            // extract id
+            // todo
 
             return null;
 
-        } catch (SOAPException e) {
+        } catch (IOException e) {
             throw new FursPluginException(e);
         }
+
     }
 
     /**
-     * check FURS conectivity
-     *
-     * @return true if coection OK, false else
+     * check FURS connectivity
      */
     public void ping() throws FursPluginException{
 
         try {
-            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
-            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+            String httpPayload=SOAP_PREPEND+"<fu:EchoResponse xmlns:fu=\"http://www.fu.gov.si/\">"+PING_STRING+"</fu:EchoResponse>"+SOAP_APPEND;
 
-            // SOAP Envelope
-            MessageFactory messageFactory = MessageFactory.newInstance(SOAPProtocol);
-            SOAPMessage soapMessage = messageFactory.createMessage();
-            SOAPPart soapPart = soapMessage.getSOAPPart();
+            Map<String, String> httpHeaders= new HashMap<String, String>();
+            httpHeaders.put("Content-Type","text/xml; charset=UTF-8");
+            httpHeaders.put("SOAPAction","/echo");
 
-            SOAPEnvelope envelope = soapPart.getEnvelope();
-            envelope.addNamespaceDeclaration("fu", "http://www.fu.gov.si");
+            String soapResponse = httpPost(this.url, httpHeaders, httpPayload);
 
-            SOAPHeader soapHeader = envelope.getHeader();
-            SOAPBody soapBody = envelope.getBody();
-            SOAPElement echoResponseElement = soapBody.addChildElement("EchoResponse","fu");
-            echoResponseElement.setTextContent(PING_STRING);
+            return;
 
-            // Setting SOAPAction header line
-            MimeHeaders headers = soapMessage.getMimeHeaders();
-            headers.addHeader("SOAPAction", "/echo");
-
-            soapMessage.saveChanges();
-            soapConnection.call(soapMessage,this.url);
-
-        } catch (SOAPException e) {
+        } catch (IOException e) {
             throw new FursPluginException(e);
         }
 
@@ -217,68 +239,61 @@ public class FursPluginSimple implements FursPlugin{
             DocumentBuilder docBuilder =  docFactory.newDocumentBuilder();
 
             Document doc = docBuilder.newDocument();
-            Element rootElement = doc.createElementNS(FU_NAMESPACE,"BusinessPremiseRequest");
+            Element rootElement = doc.createElementNS(FU_NAMESPACE,"fu:BusinessPremiseRequest");
             rootElement.setAttribute("Id",SIGN_ELEMENT_ID);
             rootElement.setIdAttribute("Id", true);  // sign BusinessPremiseRequest element
             doc.appendChild(rootElement);
 
             // <Header>
-            Element headerElement = doc.createElementNS(FU_NAMESPACE, "Header");
-            rootElement.appendChild(headerElement);
+            Element headerElement = setElement(new QName(FU_NAMESPACE, "Header", FU_NAMESPACE_PREFIX), doc, rootElement);
 
-            setFinalElement(FU_NAMESPACE, "MessageID", uuid, doc, headerElement);
+            setFinalElement(new QName(FU_NAMESPACE, "MessageID", FU_NAMESPACE_PREFIX), uuid, doc, headerElement);
 
             DateFormat df = new SimpleDateFormat("2015-MM-dd'T'hh:mm:ss");
             String date =df.format(new Date());
-            setFinalElement(FU_NAMESPACE, "DateTime", date, doc, headerElement);
+            setFinalElement(new QName(FU_NAMESPACE, "DateTime", FU_NAMESPACE_PREFIX), date, doc, headerElement);
 
             // <BusinessPremise>
-            Element businessPremiseElement = doc.createElementNS(FU_NAMESPACE, "BusinessPremise");
-            rootElement.appendChild(businessPremiseElement);
-            setFinalElement(FU_NAMESPACE, "TaxNumber", premise.getTaxNumber(), doc, businessPremiseElement);
-            setFinalElement(FU_NAMESPACE, "BusinessPremiseID", premise.getPremiseId(), doc, businessPremiseElement);
+            Element businessPremiseElement = setElement(new QName(FU_NAMESPACE, "BusinessPremise", FU_NAMESPACE_PREFIX), doc, rootElement);
+            setFinalElement(new QName(FU_NAMESPACE, "TaxNumber", FU_NAMESPACE_PREFIX), premise.getTaxNumber(), doc, businessPremiseElement);
+            setFinalElement(new QName(FU_NAMESPACE, "BusinessPremiseID", FU_NAMESPACE_PREFIX), premise.getPremiseId(), doc, businessPremiseElement);
 
             // <BPIdentifier>
-            Element bPIdentifierElement = doc.createElementNS(FU_NAMESPACE, "BPIdentifier");
-            businessPremiseElement.appendChild(bPIdentifierElement);
+            Element bPIdentifierElement = setElement(new QName(FU_NAMESPACE, "BPIdentifier", FU_NAMESPACE_PREFIX), doc, businessPremiseElement);
             CadastralData cadastralData = premise.getCadastralData();
             if (cadastralData != null) { // if real estate - immobile premise
-                Element realEstateBPElement = doc.createElementNS(FU_NAMESPACE, "RealEstateBP");
-                bPIdentifierElement.appendChild(realEstateBPElement);
+                Element realEstateBPElement = setElement(new QName(FU_NAMESPACE, "RealEstateBP", FU_NAMESPACE_PREFIX), doc, bPIdentifierElement);
 
-                Element propertyID = doc.createElementNS(FU_NAMESPACE, "PropertyID");
-                realEstateBPElement.appendChild(propertyID);
+                Element propertyID = setElement(new QName(FU_NAMESPACE, "PropertyID", FU_NAMESPACE_PREFIX), doc, realEstateBPElement);
 
-                setFinalElement(FU_NAMESPACE, "CadastralNumber", cadastralData.getCadastralCommunityNumber(), doc, propertyID);
-                setFinalElement(FU_NAMESPACE, "BuildingNumber", cadastralData.getCadastralBuildingNumber(), doc, propertyID);
-                setFinalElement(FU_NAMESPACE, "BuildingSectionNumber", cadastralData.getCadastralBuildingPartNumber(), doc, propertyID);
+                setFinalElement(new QName(FU_NAMESPACE, "CadastralNumber", FU_NAMESPACE_PREFIX), cadastralData.getCadastralCommunityNumber(), doc, propertyID);
+                setFinalElement(new QName(FU_NAMESPACE, "BuildingNumber", FU_NAMESPACE_PREFIX), cadastralData.getCadastralBuildingNumber(), doc, propertyID);
+                setFinalElement(new QName(FU_NAMESPACE, "BuildingSectionNumber", FU_NAMESPACE_PREFIX), cadastralData.getCadastralBuildingPartNumber(), doc, propertyID);
 
-                Element addressElement = doc.createElementNS(FU_NAMESPACE, "Address");
-                realEstateBPElement.appendChild(addressElement);
+                Element addressElement = setElement(new QName(FU_NAMESPACE, "Address", FU_NAMESPACE_PREFIX), doc, realEstateBPElement);
 
-                setFinalElement(FU_NAMESPACE, "Street", premise.getAdress().getStreet(), doc, addressElement);
-                setFinalElement(FU_NAMESPACE, "HouseNumber", premise.getAdress().getNumber(), doc, addressElement);
-                if (premise.getAdress().getNumberAd()!=null) setFinalElement(FU_NAMESPACE, "HouseNumberAdditional", premise.getAdress().getNumberAd(), doc, addressElement);
-                setFinalElement(FU_NAMESPACE, "Community", premise.getAdress().getPostName(), doc, addressElement);
-                setFinalElement(FU_NAMESPACE, "City", premise.getAdress().getTown(), doc, addressElement);
-                setFinalElement(FU_NAMESPACE, "PostalCode", premise.getAdress().getPostNumber(), doc, addressElement);
+                setFinalElement(new QName(FU_NAMESPACE, "Street", FU_NAMESPACE_PREFIX), premise.getAdress().getStreet(), doc, addressElement);
+                setFinalElement(new QName(FU_NAMESPACE, "HouseNumber", FU_NAMESPACE_PREFIX), premise.getAdress().getNumber(), doc, addressElement);
+                if (premise.getAdress().getNumberAd()!=null) setFinalElement(new QName(FU_NAMESPACE, "HouseNumberAdditional", FU_NAMESPACE_PREFIX), premise.getAdress().getNumberAd(), doc, addressElement);
+                setFinalElement(new QName(FU_NAMESPACE, "Community", FU_NAMESPACE_PREFIX), premise.getAdress().getPostName(), doc, addressElement);
+                setFinalElement(new QName(FU_NAMESPACE, "City", FU_NAMESPACE_PREFIX), premise.getAdress().getTown(), doc, addressElement);
+                setFinalElement(new QName(FU_NAMESPACE, "PostalCode", FU_NAMESPACE_PREFIX), premise.getAdress().getPostNumber(), doc, addressElement);
             } else {
-                setFinalElement(FU_NAMESPACE, "PremiseType", ""+premise.getMovablePremise(), doc, bPIdentifierElement);
+                setFinalElement(new QName(FU_NAMESPACE, "PremiseType", FU_NAMESPACE_PREFIX), ""+premise.getMovablePremise(), doc, bPIdentifierElement);
             }
 
-            setFinalElement(FU_NAMESPACE, "ValidityDate",premise.getPremiseValidityDate(), doc, businessPremiseElement);
+            setFinalElement(new QName(FU_NAMESPACE, "ValidityDate", FU_NAMESPACE_PREFIX),premise.getPremiseValidityDate(), doc, businessPremiseElement);
 
-            Element softwareSupplier = doc.createElementNS(FU_NAMESPACE, "SoftwareSupplier");
-            businessPremiseElement.appendChild(softwareSupplier);
+            Element softwareSupplier = setElement(new QName(FU_NAMESPACE, "SoftwareSupplier", FU_NAMESPACE_PREFIX), doc, businessPremiseElement);
             SwProvider swProvider = premise.getSwProvider();
             if (swProvider.getVat()!=null) {
-                setFinalElement(FU_NAMESPACE, "TaxNumber",swProvider.getVat(), doc, softwareSupplier);
+                setFinalElement(new QName(FU_NAMESPACE, "TaxNumber", FU_NAMESPACE_PREFIX),swProvider.getVat(), doc, softwareSupplier);
             } else {
-                setFinalElement(FU_NAMESPACE, "NameForeign",swProvider.getForeignTitle(), doc, softwareSupplier);
+                setFinalElement(new QName(FU_NAMESPACE, "NameForeign", FU_NAMESPACE_PREFIX),swProvider.getForeignTitle(), doc, softwareSupplier);
             }
 
             if (premise.getAux()!=null) {
-                setFinalElement(FU_NAMESPACE, "SpecialNotes", premise.getAux(), doc, businessPremiseElement);
+                setFinalElement(new QName(FU_NAMESPACE, "SpecialNotes", FU_NAMESPACE_PREFIX), premise.getAux(), doc, businessPremiseElement);
             }
 
             return doc;
@@ -301,19 +316,17 @@ public class FursPluginSimple implements FursPlugin{
             doc.appendChild(rootElement);
 
             // <Header>
-            Element headerElement = doc.createElementNS(FU_NAMESPACE, "Header");
-            rootElement.appendChild(headerElement);
+            Element headerElement = setElement(new QName(FU_NAMESPACE, "Header", FU_NAMESPACE_PREFIX), doc, rootElement);
 
-            setFinalElement(FU_NAMESPACE, "MessageID", uuid, doc, headerElement);
+            setFinalElement(new QName(FU_NAMESPACE, "MessageID", FU_NAMESPACE_PREFIX), uuid, doc, headerElement);
 
             DateFormat df = new SimpleDateFormat("2015-MM-dd'T'hh:mm:ss");
             String date =df.format(new Date());
-            setFinalElement(FU_NAMESPACE, "DateTime", date, doc, headerElement);
+            setFinalElement(new QName(FU_NAMESPACE, "DateTime", FU_NAMESPACE_PREFIX), date, doc, headerElement);
 
             // <Invoice>
-            Element invoiceElement = doc.createElementNS(FU_NAMESPACE, "BusinessPremise");
-            rootElement.appendChild(invoiceElement);
-            setFinalElement(FU_NAMESPACE, "TaxNumber", premise.getTaxNumber(), doc, invoiceElement);
+            Element invoiceElement = setElement(new QName(FU_NAMESPACE, "BusinessPremise", FU_NAMESPACE_PREFIX), doc, rootElement);
+            setFinalElement(new QName(FU_NAMESPACE, "TaxNumber", FU_NAMESPACE_PREFIX), premise.getTaxNumber(), doc, invoiceElement);
 
             return doc;
         } catch (ParserConfigurationException e) {
@@ -326,13 +339,23 @@ public class FursPluginSimple implements FursPlugin{
         return null;
     }
 
-    private void setFinalElement(String namespace, String elementName, String elementValue, Document doc, Element parentElement) {
-
+    private Element setElement(QName elementName, Document doc, Element parentElement) {
         Element element;
-        if (namespace==null) {
-            element = doc.createElement(elementName);
+        if (elementName.getNamespaceURI()==null) {
+            element = doc.createElement(elementName.getLocalPart());
         } else {
-            element = doc.createElementNS(FU_NAMESPACE, elementName);
+            element = doc.createElementNS(elementName.getNamespaceURI(), elementName.getPrefix()+":"+elementName.getLocalPart());
+        }
+        parentElement.appendChild(element);
+        return element;
+    }
+
+    private void setFinalElement(QName elementName, String elementValue, Document doc, Element parentElement) {
+        Element element;
+        if (elementName.getNamespaceURI()==null) {
+            element = doc.createElement(elementName.getLocalPart());
+        } else {
+            element = doc.createElementNS(elementName.getNamespaceURI(), elementName.getPrefix()+":"+elementName.getLocalPart());
         }
         element.setTextContent(elementValue);
         parentElement.appendChild(element);
@@ -350,7 +373,7 @@ public class FursPluginSimple implements FursPlugin{
             httppost.addHeader(entry.getKey(), entry.getValue());
         }
         //Execute and get the response.
-        HttpClient httpclient = new DefaultHttpClient();
+        HttpClient httpclient = HttpClients.createSystem();
         HttpResponse response = httpclient.execute(httppost);
         if (response.getStatusLine().getStatusCode()!=200) {
             throw new IOException("Server returned error "+response.getStatusLine());
@@ -366,16 +389,14 @@ public class FursPluginSimple implements FursPlugin{
     private String documentToString(Document doc) throws FursPluginException {
 
         try {
-            DOMSource domSource = new DOMSource(doc);
-            StringWriter writer = new StringWriter();
-            StreamResult result = new StreamResult(writer);
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            transformer.transform(domSource, result);
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
             return writer.toString();
         } catch (TransformerException e) {
-           throw new FursPluginException(e);
+            throw new FursPluginException(e);
         }
     }
 
@@ -383,14 +404,6 @@ public class FursPluginSimple implements FursPlugin{
         if (id!=null && id.length()==ID_LENGTH && obj!=null || obj.validateData()) {
             return;
         }
-        throw new FursPluginException("Not valid arguments");
-    }
-
-    private void printSoapMsg(SOAPMessage msg)  {
-        try {
-            System.out.print(" SOAP Message:");
-            msg.writeTo(System.out);
-        } catch (Exception e) {}
-
+        throw new FursPluginException("Invalid arguments");
     }
 }
