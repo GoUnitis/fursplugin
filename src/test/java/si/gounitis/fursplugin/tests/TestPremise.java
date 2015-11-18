@@ -26,7 +26,8 @@ import si.gounitis.fursplugin.beans.CadastralData;
 import si.gounitis.fursplugin.beans.Premise;
 import si.gounitis.fursplugin.beans.SwProvider;
 import si.gounitis.fursplugin.helpers.Tools;
-import si.gounitis.fursplugin.impl.FursPluginSimple;
+import si.gounitis.fursplugin.impl.FursPluginJson;
+import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
 public class TestPremise {
     public TestPremise() {
@@ -34,14 +35,12 @@ public class TestPremise {
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
         System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
         System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
-        System.setProperty("javax.net.debug", "all");
+        //System.setProperty("javax.net.debug", "all");
     }
 
     @Test
     public void testPremiseRealEstate() {
-        //FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9001/v1/cash_registers");
-        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-        //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/invoices/register");
 
         Premise premise=new Premise();
         premise.setTaxNumber("10075623");
@@ -63,7 +62,7 @@ public class TestPremise {
         premise.setPremiseValidityDate("2020-01-22"); // od kdaj je prostor registiran
         //premise.setClosePremise(true); // èe zapisramo objekt
         SwProvider swProvider = new SwProvider();
-        swProvider.setVat("22222222"); // èe je slovenski dobavitelj SW
+        swProvider.setVat("72114916"); // èe je slovenski dobavitelj SW
         //swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
@@ -78,8 +77,8 @@ public class TestPremise {
     //@Test
     public void testPremiseMobileForegnSwDeveloper() {
 
-        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-        //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        //FursPlugin plugin= new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/invoices/register");
 
         Premise premise=new Premise();
         premise.setTaxNumber("10075623");
@@ -88,7 +87,7 @@ public class TestPremise {
         premise.setPremiseValidityDate("2015-01-22"); // od kdaj je prostor registiran
         //premise.setClosePremise(true); // èe zapisramo objekt
         SwProvider swProvider = new SwProvider();
-        //swProvider.setVat("22222222"); // èe je slovenski dobavitelj SW
+        //swProvider.setVat("72114916"); // èe je slovenski dobavitelj SW
         swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
@@ -104,8 +103,8 @@ public class TestPremise {
     //@Test
     public void testPremiseCloseAdditionalData() {
 
-        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-        //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        //FursPlugin plugin= new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/invoices/register");
 
         Premise premise=new Premise();
         premise.setTaxNumber("10075623");
@@ -114,7 +113,7 @@ public class TestPremise {
         premise.setPremiseValidityDate("2015-01-22"); // od kdaj je prostor registiran
         premise.setClosePremise(true); // èe zapisramo objekt
         SwProvider swProvider = new SwProvider();
-        swProvider.setVat("22222222"); // èe je slovenski dobavitelj SW
+        swProvider.setVat("72114916"); // èe je slovenski dobavitelj SW
         //swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");

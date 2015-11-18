@@ -25,8 +25,8 @@ import org.junit.runner.notification.Failure;
 public class TestRunner {
     public static void main(String[] args) {
         Result result = JUnitCore.runClasses(
-                // TestSign.class
-                //,TestPing.class
+                //TestSign.class
+                //TestPing.class
                 TestPremise.class
                 //TestInvoice.class
                 );

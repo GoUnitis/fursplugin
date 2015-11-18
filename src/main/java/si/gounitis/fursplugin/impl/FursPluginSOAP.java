@@ -34,16 +34,15 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.*;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringWriter;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -55,16 +54,19 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import si.gounitis.fursplugin.helpers.SignApache;
 
 /**
  * Created by Jure on 7.10.2015.
  */
-public class FursPluginSimple implements FursPlugin{
+public class FursPluginSOAP implements FursPlugin{
 
     private static final String PING_STRING="Mnogo let za tem, ko je Polkovnik Aureliano Buendia";
     private static final int ID_LENGTH=36;
 
     private static final String FU_NAMESPACE="http://www.fu.gov.si/";
+    private static final String SOAPENV_NAMESPACE="http://schemas.xmlsoap.org/soap/envelope/";
+    private static final String SOAPENV_NAMESPACE_PREFIX="soapenv";
     private static final String FU_NAMESPACE_PREFIX="fu";
     private static final String SIGN_ELEMENT_ID="data";
 
@@ -80,7 +82,7 @@ public class FursPluginSimple implements FursPlugin{
      * Constructor
       * @param url - webservice URL address
      */
-    public FursPluginSimple(String url) {
+    public FursPluginSOAP(String url) {
 
         this.url=url;
     }
@@ -96,64 +98,26 @@ public class FursPluginSimple implements FursPlugin{
 
         checkInput(uuid, premise);
 
-        Document businessPremiseRequest=getBusinessPremiseRequest(uuid, premise);
-        Document signedBusinessPremiseRequest = Sign.signDocument(businessPremiseRequest, "#"+SIGN_ELEMENT_ID, "signcert");
-
         try {
-            //First create the connection
-            SOAPConnectionFactory soapConnFactory = SOAPConnectionFactory.newInstance();
-            SOAPConnection connection = soapConnFactory.createConnection();
-
-            //Next, create the actual message
-            MessageFactory messageFactory = MessageFactory.newInstance();
-            SOAPMessage soapMessage = messageFactory.createMessage();
-
-            // Create objects for the message parts
-            SOAPPart soapPart = soapMessage.getSOAPPart();
-            SOAPEnvelope envelope = soapPart.getEnvelope();
-
-            // remove Header from SOAP message
-            envelope.getHeader().detachNode();
-
-            SOAPBody body = envelope.getBody();
-
-            //Populate the Message
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            dbFactory.setNamespaceAware(true);
-
-            // Setting SOAPAction header line
-            MimeHeaders headers = soapMessage.getMimeHeaders();
-            headers.addHeader("SOAPAction", "/invoices/register");
-
-            // Add xml document SOAP to body
-            body.addDocument(signedBusinessPremiseRequest);
-            soapMessage.saveChanges();
-
-            //Set the destination
-            URL destination = new URL(this.url);
-
-            System.out.println("\nREQUEST:\n");
-            soapMessage.writeTo(System.out);
-            parsePremiseResponse(soapMessage);
-
-            // Send the message
-            SOAPMessage reply = connection.call(soapMessage, destination);
+            Document businessPremiseRequest=getBusinessPremiseRequest(uuid, premise);
+            Document signedBusinessPremiseRequest = SignApache.signDocument(businessPremiseRequest, "#" + SIGN_ELEMENT_ID, "signcert");
+            documentToFile(signedBusinessPremiseRequest,"temp/dokument.xml");
 
 
 
+            System.out.println(documentToString(signedBusinessPremiseRequest));
 
-            System.out.println("\nREQUEST:\n");
-            reply.writeTo(System.out);
-            parsePremiseResponse(reply);
+            Map<String, String> httpHeaders= new HashMap<String, String>();
+            httpHeaders.put("Content-Type","text/xml; charset=UTF-8");
+            httpHeaders.put("SOAPAction","/invoices/register");
 
+            String soapResponse = httpPost(this.url, httpHeaders, documentToString(signedBusinessPremiseRequest));
+            System.out.println(soapResponse);
 
-
-
-            connection.close();
 
         } catch (IOException e) {
             throw new FursPluginException(e);
-        } catch (SOAPException e) {
+        } catch (Exception e) {
             throw new FursPluginException(e);
         }
 
@@ -239,13 +203,18 @@ public class FursPluginSimple implements FursPlugin{
             DocumentBuilder docBuilder =  docFactory.newDocumentBuilder();
 
             Document doc = docBuilder.newDocument();
-            Element rootElement = doc.createElementNS(FU_NAMESPACE,"fu:BusinessPremiseRequest");
-            rootElement.setAttribute("Id",SIGN_ELEMENT_ID);
-            rootElement.setIdAttribute("Id", true);  // sign BusinessPremiseRequest element
+            Element rootElement = doc.createElementNS(SOAPENV_NAMESPACE,SOAPENV_NAMESPACE_PREFIX+":Envelope");
             doc.appendChild(rootElement);
 
+            Element bodyElement = setElement(new QName(SOAPENV_NAMESPACE, "Header", SOAPENV_NAMESPACE_PREFIX), doc, rootElement);
+
+            Element businessPremiseRequestElement = setElement(new QName(FU_NAMESPACE, "BusinessPremiseRequest", FU_NAMESPACE_PREFIX), doc, bodyElement);
+
+            businessPremiseRequestElement.setAttribute("Id",SIGN_ELEMENT_ID);
+            businessPremiseRequestElement.setIdAttribute("Id", true);  // sign BusinessPremiseRequest element
+
             // <Header>
-            Element headerElement = setElement(new QName(FU_NAMESPACE, "Header", FU_NAMESPACE_PREFIX), doc, rootElement);
+            Element headerElement = setElement(new QName(FU_NAMESPACE, "Header", FU_NAMESPACE_PREFIX), doc, businessPremiseRequestElement);
 
             setFinalElement(new QName(FU_NAMESPACE, "MessageID", FU_NAMESPACE_PREFIX), uuid, doc, headerElement);
 
@@ -254,7 +223,7 @@ public class FursPluginSimple implements FursPlugin{
             setFinalElement(new QName(FU_NAMESPACE, "DateTime", FU_NAMESPACE_PREFIX), date, doc, headerElement);
 
             // <BusinessPremise>
-            Element businessPremiseElement = setElement(new QName(FU_NAMESPACE, "BusinessPremise", FU_NAMESPACE_PREFIX), doc, rootElement);
+            Element businessPremiseElement = setElement(new QName(FU_NAMESPACE, "BusinessPremise", FU_NAMESPACE_PREFIX), doc, businessPremiseRequestElement);
             setFinalElement(new QName(FU_NAMESPACE, "TaxNumber", FU_NAMESPACE_PREFIX), premise.getTaxNumber(), doc, businessPremiseElement);
             setFinalElement(new QName(FU_NAMESPACE, "BusinessPremiseID", FU_NAMESPACE_PREFIX), premise.getPremiseId(), doc, businessPremiseElement);
 
@@ -391,7 +360,7 @@ public class FursPluginSimple implements FursPlugin{
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            //transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             StringWriter writer = new StringWriter();
             transformer.transform(new DOMSource(doc), new StreamResult(writer));
             return writer.toString();
@@ -399,6 +368,16 @@ public class FursPluginSimple implements FursPlugin{
             throw new FursPluginException(e);
         }
     }
+
+    private void documentToFile(Document doc, String file) throws TransformerException, IOException {
+        OutputStream os = new FileOutputStream(file);
+        Transformer trans = TransformerFactory.newInstance()
+                .newTransformer();
+        trans.transform(new DOMSource(doc), new StreamResult(os));
+        os.flush();
+        os.close();
+    }
+
 
     private void checkInput(String id, FursObject obj) throws FursPluginException{
         if (id!=null && id.length()==ID_LENGTH && obj!=null || obj.validateData()) {

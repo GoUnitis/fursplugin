@@ -31,8 +31,6 @@ import javax.xml.crypto.dsig.keyinfo.X509IssuerSerial;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 
-import org.w3c.dom.Element;
-
 import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;

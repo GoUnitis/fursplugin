@@ -23,7 +23,7 @@ import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.*;
 import si.gounitis.fursplugin.helpers.Tools;
-import si.gounitis.fursplugin.impl.FursPluginSimple;
+import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
 public class TestInvoice {
     public TestInvoice() {
@@ -38,7 +38,7 @@ public class TestInvoice {
     public void testInvoiceCacheRegister() {
 
         boolean salesBook=false;
-        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        FursPlugin plugin= new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
         //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
 
         Premise premise=new Premise();
@@ -60,7 +60,7 @@ public class TestInvoice {
     public void testInvoiceSalesBook() {
 
         boolean salesBook=true;
-        FursPlugin plugin= new FursPluginSimple("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
+        FursPlugin plugin= new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
         //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
 
         Premise premise=new Premise();

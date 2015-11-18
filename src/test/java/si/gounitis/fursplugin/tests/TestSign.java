@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import si.gounitis.fursplugin.helpers.SignApache;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -38,7 +39,7 @@ public class TestSign {
     private static String ID_VALUE = "data";
 
     @Test
-    public void testInvoice() {
+    public void testSign() {
         System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
         System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
@@ -52,15 +53,22 @@ public class TestSign {
             Element rootElement = doc.createElement("A");
             doc.appendChild(rootElement);
 
+            //Element subElement = doc.createElement("A1");
+            //rootElement.appendChild(subElement);
+
             Element firstSubElement = doc.createElement("B");
             firstSubElement.setAttribute("Id",ID_VALUE);
             firstSubElement.setIdAttribute("Id", true);  // sign B element
             rootElement.appendChild(firstSubElement);
+            //subElement.appendChild(firstSubElement);
 
             Element secondSubElement = doc.createElement("C");
             firstSubElement.appendChild(secondSubElement);
 
-            Document sdoc = Sign.signDocument(doc, "#"+ID_VALUE, "signcert");
+            //Document sdoc = Sign.signDocument(doc, "#"+ID_VALUE, "signcert");
+            //printDocument(sdoc);
+
+            Document sdoc = SignApache.signDocument(doc, "#" + ID_VALUE, "signcert");
             printDocument(sdoc);
         } catch (Exception e) {
             throw new RuntimeException(e);
