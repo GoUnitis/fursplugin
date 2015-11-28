@@ -56,9 +56,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import si.gounitis.fursplugin.helpers.SignApache;
 
-/**
- * Created by Jure on 7.10.2015.
- */
 public class FursPluginSOAP implements FursPlugin{
 
     private static final String PING_STRING="Mnogo let za tem, ko je Polkovnik Aureliano Buendia";
@@ -141,15 +138,14 @@ public class FursPluginSOAP implements FursPlugin{
      * @param uuid - unique message ID (could be genertebd by si.gounitis.fursplugin.helpers.Tools.getNewUiid()
      * @param invoice - invoice data POJO
      * @param salesBook - is invoice issued based on sales book invoice
-     * @param premise - premise data POJO
      * @param signingCertAlias - name of signing certificate in a keystore
      * @return invoice ID
      */
-    public String issueInvoice(String uuid, Invoice invoice, boolean salesBook, Premise premise, String signingCertAlias) throws FursPluginException{
+    public String issueInvoice(String uuid, Invoice invoice, boolean salesBook, String signingCertAlias) throws FursPluginException{
         checkInput(uuid, invoice);
 
         try {
-            Document invoiceRequest=getInvoiceRequest(uuid, invoice, premise);
+            Document invoiceRequest=getInvoiceRequest(uuid, invoice);
             Document signedInvoiceRequest = Sign.signDocument(invoiceRequest, "#"+SIGN_ELEMENT_ID, "signcert");
             String httpPayload=SOAP_PREPEND+documentToString(signedInvoiceRequest)+SOAP_APPEND;
 
@@ -273,7 +269,7 @@ public class FursPluginSOAP implements FursPlugin{
 
     }
 
-    private Document getInvoiceRequest(String uuid, Invoice invoice, Premise premise) throws FursPluginException {
+    private Document getInvoiceRequest(String uuid, Invoice invoice) throws FursPluginException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder =  docFactory.newDocumentBuilder();
@@ -295,7 +291,8 @@ public class FursPluginSOAP implements FursPlugin{
 
             // <Invoice>
             Element invoiceElement = setElement(new QName(FU_NAMESPACE, "BusinessPremise", FU_NAMESPACE_PREFIX), doc, rootElement);
-            setFinalElement(new QName(FU_NAMESPACE, "TaxNumber", FU_NAMESPACE_PREFIX), premise.getTaxNumber(), doc, invoiceElement);
+
+            // todo
 
             return doc;
         } catch (ParserConfigurationException e) {
