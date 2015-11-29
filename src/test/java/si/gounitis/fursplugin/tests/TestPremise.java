@@ -27,7 +27,6 @@ import si.gounitis.fursplugin.beans.Premise;
 import si.gounitis.fursplugin.beans.SwProvider;
 import si.gounitis.fursplugin.helpers.Tools;
 import si.gounitis.fursplugin.impl.FursPluginJson;
-import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
 public class TestPremise {
     public TestPremise() {
@@ -74,6 +73,7 @@ public class TestPremise {
         }
 
     }
+
     //@Test
     public void testPremiseMobileForegnSwDeveloper() {
 

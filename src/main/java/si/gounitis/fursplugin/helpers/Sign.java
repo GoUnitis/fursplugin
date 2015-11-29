@@ -39,9 +39,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Jure on 9.10.2015.
- */
 public class Sign {
     private static String DIGEST_METHOD = DigestMethod.SHA256;
     //private static String SIGNATURE_METHOD = SignatureMethod.RSA_SHA1;

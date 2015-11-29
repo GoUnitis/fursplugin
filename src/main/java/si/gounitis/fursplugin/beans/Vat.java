@@ -1,5 +1,7 @@
 //********************************************************************************
 //
+//    About - About box class
+//
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
@@ -16,23 +18,35 @@
 //    Revision history:
 //        12.10.2015: J. Zelic - First Version
 //********************************************************************************
-package si.gounitis.fursplugin;
 
-public class FursPluginException extends Exception{
-    public FursPluginException() {
-        super();
+package si.gounitis.fursplugin.beans;
+
+public class Vat {
+    private String taxRate; // if invoice includes Tax - 0-99.99
+    private String taxableAmmount; // if invoice includes Tax
+    private String taxAmmount; // if invoice includes Tax
+
+    public String getTaxRate() {
+        return taxRate;
     }
 
-    public FursPluginException(String message) {
-        super(message);
+    public String getTaxableAmmount() {
+        return taxableAmmount;
     }
 
-    public FursPluginException(String message, Throwable throwable) {
-        super(message, throwable);
+    public String getTaxAmmount() {
+        return taxAmmount;
     }
 
-    public FursPluginException(Throwable throwable) {
-        super(throwable);
+    public void setTaxRate(String taxRate) {
+        this.taxRate = taxRate;
     }
 
+    public void setTaxableAmmount(String taxableAmmount) {
+        this.taxableAmmount = taxableAmmount;
+    }
+
+    public void setTaxAmmount(String taxAmmount) {
+        this.taxAmmount = taxAmmount;
+    }
 }

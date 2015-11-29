@@ -25,6 +25,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.ParseException;
@@ -36,7 +37,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -89,6 +89,9 @@ public class FursPluginJson implements FursPlugin {
             String jwsPayload=getJwsPayload(responseToken);
 
             //System.out.println(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8));
+
+            invoiceParseResult(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8), ResponseType.PREMISE);
+
         } catch (IOException e) {
             throw new FursPluginException(e);
         } catch (ParseException e) {
@@ -127,9 +130,10 @@ public class FursPluginJson implements FursPlugin {
             String responseToken= (String) json.get("token");
             //checkSignature(responseToken);
             String jwsPayload=getJwsPayload(responseToken);
-
-            System.out.println(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8));
-            return null;
+            
+            //System.out.println(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8));
+            
+            return invoiceParseResult(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8),ResponseType.INVOICE);
         } catch (IOException e) {
             throw new FursPluginException(e);
         } catch (ParseException e) {
@@ -185,13 +189,15 @@ public class FursPluginJson implements FursPlugin {
             List vat= new LinkedList();
             for (TaxesPerSeller tps:invoice.getTaxesPerSeller()) {
                 Map vatContent = new LinkedHashMap();
-                vatContent.put("TaxRate", Float.parseFloat(tps.getTaxRate()));
-                vatContent.put("TaxableAmount", Float.parseFloat(tps.getTaxableAmmount()));
-                vatContent.put("TaxAmount", Float.parseFloat(tps.getTaxableAmmount()));
-                vat.add(vatContent);
+                for (Vat vt: tps.getVat()) {
+                    vatContent.put("TaxRate", Float.parseFloat(vt.getTaxRate()));
+                    vatContent.put("TaxableAmount", Float.parseFloat(vt.getTaxableAmmount()));
+                    vatContent.put("TaxAmount", Float.parseFloat(vt.getTaxAmmount()));
+                    vat.add(vatContent);
+                }
             }
             m0.put("VAT", vat);
-            //m0.put("ExemptVATTaxableAmount", Float.parseFloat(invoice.getInvoiceAmmount()));
+            if (invoice.getInvoiceAmmount()!=null) m0.put("ExemptVATTaxableAmount", Float.parseFloat(invoice.getInvoiceAmmount()));
             taxPerSeller.add(m0);
             invoiceMap.put("TaxesPerSeller", taxPerSeller);
 
@@ -209,7 +215,9 @@ public class FursPluginJson implements FursPlugin {
         invoiceRequest.put("Invoice",invoiceMap);
 
         obj.put("InvoiceRequest",invoiceRequest);
-        System.out.println(JSONValue.toJSONString(obj));
+
+        //System.out.println(JSONValue.toJSONString(obj));
+
         return JSONValue.toJSONString(obj);
     }
 
@@ -254,6 +262,7 @@ public class FursPluginJson implements FursPlugin {
         } else {
             Map bPIdentifier = new LinkedHashMap();
             bPIdentifier.put("PremiseType", premise.getMovablePremise());
+            businessPremise.put("BPIdentifier", bPIdentifier);
         }
         businessPremise.put("ValidityDate",premise.getPremiseValidityDate());
         if (premise.getClosePremise()) businessPremise.put("ClosingTag","Z");
@@ -367,6 +376,22 @@ public class FursPluginJson implements FursPlugin {
         }
     }
 
+
+    private String invoiceParseResult(String jwsPayload, ResponseType type) {
+        JSONObject obj = (JSONObject) JSONValue.parse(jwsPayload);
+        JSONObject response;
+        if (ResponseType.INVOICE.equals(type)) {
+            response = (JSONObject) obj.get("InvoiceResponse");
+        } else {
+            response = (JSONObject) obj.get("BusinessPremiseResponse");
+        }
+        JSONObject error = (JSONObject) response.get("Error");
+        if (error!=null)
+            throw new RuntimeException("ERROR " + error.get("ErrorCode") + "-" + error.get("ErrorMessage"));
+
+        return (String) response.get("UniqueInvoiceID");
+    }
+
     private ContainerFactory getContainerFactory() {
         ContainerFactory containerFactory = new ContainerFactory() {
             public List creatArrayContainer() {
@@ -377,5 +402,9 @@ public class FursPluginJson implements FursPlugin {
             }
         };
         return containerFactory;
+    }
+
+    private enum ResponseType {
+        INVOICE, PREMISE
     }
 }

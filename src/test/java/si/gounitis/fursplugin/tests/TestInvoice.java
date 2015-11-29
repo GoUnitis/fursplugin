@@ -24,7 +24,6 @@ import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.*;
 import si.gounitis.fursplugin.helpers.Tools;
 import si.gounitis.fursplugin.impl.FursPluginJson;
-import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ public class TestInvoice {
         System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
         //System.setProperty("javax.net.debug", "all");
     }
-    //@Test
+    @Test
     public void testInvoiceCacheRegister() {
 
         FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
@@ -50,26 +49,40 @@ public class TestInvoice {
         invoice.setPremiseId("36CF");
         invoice.setDeviceId("REG12");
         invoice.setInvoiceNumber("205");
-        invoice.setInvoiceAmmount("30.00");
-        invoice.setPaymentAmmount("36.61");
+        invoice.setInvoiceAmmount("50.00");
+        invoice.setPaymentAmmount("58.51");
+
         List<TaxesPerSeller> taxesPerSellerList = new ArrayList<TaxesPerSeller>();
         TaxesPerSeller taxesPerSeller = new TaxesPerSeller();
-        taxesPerSeller.setTaxRate("22.00");
-        taxesPerSeller.setTaxableAmmount("30.00");
-        taxesPerSeller.setTaxAmmount("6,61");
+
+        List<Vat> vatList = new ArrayList<Vat>();
+        Vat vat1 = new Vat();
+        vat1.setTaxRate("22.00");
+        vat1.setTaxableAmmount("30.00");
+        vat1.setTaxAmmount("6.61");
+        vatList.add(vat1);
+        Vat vat2 = new Vat();
+        vat2.setTaxRate("9.50");
+        vat2.setTaxableAmmount("20.00");
+        vat2.setTaxAmmount("1.90");
+        vatList.add(vat2);
+
+        taxesPerSeller.setVat(vatList);
         taxesPerSellerList.add(taxesPerSeller);
         invoice.setTaxesPerSeller(taxesPerSellerList);
+
         invoice.setProtectedId("8202f0f963e37a2258b034cf8ae7bbc1");
         invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            String rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Test
+    //@Test
     public void testInvoiceCacheRegisterNoVat() {
 
         FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");

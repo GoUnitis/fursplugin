@@ -19,9 +19,6 @@
 package si.gounitis.fursplugin.tests;
 
 import org.junit.Test;
-import si.gounitis.fursplugin.helpers.Sign;
-
-import static org.junit.Assert.assertEquals;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -29,7 +26,6 @@ import si.gounitis.fursplugin.helpers.SignApache;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;

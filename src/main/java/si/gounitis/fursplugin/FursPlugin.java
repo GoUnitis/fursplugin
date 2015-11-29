@@ -44,8 +44,6 @@ public interface FursPlugin {
 
     /**
      * check FURS conectivity
-     *
-     * @return true if coection OK, false else
      */
     void ping() throws FursPluginException;
 }

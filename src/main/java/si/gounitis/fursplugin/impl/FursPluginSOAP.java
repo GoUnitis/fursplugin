@@ -183,8 +183,6 @@ public class FursPluginSOAP implements FursPlugin{
 
             String soapResponse = httpPost(this.url, httpHeaders, httpPayload);
 
-            return;
-
         } catch (IOException e) {
             throw new FursPluginException(e);
         }

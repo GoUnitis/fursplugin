@@ -24,8 +24,6 @@ import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.impl.FursPluginJson;
 import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
-import static org.junit.Assert.assertEquals;
-
 public class TestPing {
 
     //@Test

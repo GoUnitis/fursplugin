@@ -20,14 +20,11 @@
 //********************************************************************************
 package si.gounitis.fursplugin.beans;
 
+import java.util.List;
+
 public class TaxesPerSeller {
     private String sellerTaxNumber;
-    private String taxRate; // if invoice includes Tax - 0-99.99
-    private String taxableAmmount; // if invoice includes Tax
-    private String taxAmmount; // if invoice includes Tax
-    private String flatRateRate; // if invoice includes the amount of the settled flat-rate compensation (pavšalno nadomastilo)
-    private String flatRateTaxableAmmount; // if invoice includes the amount of the settled flat-rate compensation (pavšalno nadomastilo)
-    private String flatRateAmmount; // if invoice includes the amount of the settled flat-rate compensation (pavšalno nadomastilo)
+    private List<Vat> vat; // if zavezanec za DDV
     private String otherTaxesAmmount; // optional
     private String exemptVatTaxebleAmmount; // optional
     private String reverseVatTaxebleAmmount; // optional
@@ -38,92 +35,52 @@ public class TaxesPerSeller {
         return sellerTaxNumber;
     }
 
-    public String getTaxRate() {
-        return taxRate;
+    public void setSellerTaxNumber(String sellerTaxNumber) {
+        this.sellerTaxNumber = sellerTaxNumber;
     }
 
-    public String getTaxableAmmount() {
-        return taxableAmmount;
+    public List<Vat> getVat() {
+        return vat;
     }
 
-    public String getTaxAmmount() {
-        return taxAmmount;
-    }
-
-    public String getFlatRateRate() {
-        return flatRateRate;
-    }
-
-    public String getFlatRateTaxableAmmount() {
-        return flatRateTaxableAmmount;
-    }
-
-    public String getFlatRateAmmount() {
-        return flatRateAmmount;
+    public void setVat(List<Vat> vat) {
+        this.vat = vat;
     }
 
     public String getOtherTaxesAmmount() {
         return otherTaxesAmmount;
     }
 
-    public String getExemptVatTaxebleAmmount() {
-        return exemptVatTaxebleAmmount;
-    }
-
-    public String getReverseVatTaxebleAmmount() {
-        return reverseVatTaxebleAmmount;
-    }
-
-    public String getNotaxebleAmmount() {
-        return notaxebleAmmount;
-    }
-
-    public String getSpecialTaxRulesAmmount() {
-        return specialTaxRulesAmmount;
-    }
-
-    public void setSellerTaxNumber(String sellerTaxNumber) {
-        this.sellerTaxNumber = sellerTaxNumber;
-    }
-
-    public void setTaxRate(String taxRate) {
-        this.taxRate = taxRate;
-    }
-
-    public void setTaxableAmmount(String taxableAmmount) {
-        this.taxableAmmount = taxableAmmount;
-    }
-
-    public void setTaxAmmount(String taxAmmount) {
-        this.taxAmmount = taxAmmount;
-    }
-
-    public void setFlatRateRate(String flatRateRate) {
-        this.flatRateRate = flatRateRate;
-    }
-
-    public void setFlatRateTaxableAmmount(String flatRateTaxableAmmount) {
-        this.flatRateTaxableAmmount = flatRateTaxableAmmount;
-    }
-
-    public void setFlatRateAmmount(String flatRateAmmount) {
-        this.flatRateAmmount = flatRateAmmount;
-    }
-
     public void setOtherTaxesAmmount(String otherTaxesAmmount) {
         this.otherTaxesAmmount = otherTaxesAmmount;
+    }
+
+    public String getExemptVatTaxebleAmmount() {
+        return exemptVatTaxebleAmmount;
     }
 
     public void setExemptVatTaxebleAmmount(String exemptVatTaxebleAmmount) {
         this.exemptVatTaxebleAmmount = exemptVatTaxebleAmmount;
     }
 
+    public String getReverseVatTaxebleAmmount() {
+        return reverseVatTaxebleAmmount;
+    }
+
     public void setReverseVatTaxebleAmmount(String reverseVatTaxebleAmmount) {
         this.reverseVatTaxebleAmmount = reverseVatTaxebleAmmount;
     }
 
+    public String getNotaxebleAmmount() {
+        return notaxebleAmmount;
+    }
+
     public void setNotaxebleAmmount(String notaxebleAmmount) {
         this.notaxebleAmmount = notaxebleAmmount;
+    }
+
+    public String getSpecialTaxRulesAmmount() {
+        return specialTaxRulesAmmount;
     }
 
     public void setSpecialTaxRulesAmmount(String specialTaxRulesAmmount) {

@@ -9,9 +9,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
-/**
- * Created by Jure on 14.11.2015.
- */
 public class ParseKeypair {
     private String subjectName;
     private String issuerName;
