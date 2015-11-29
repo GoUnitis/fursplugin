@@ -37,11 +37,10 @@ public interface FursPlugin {
      *
      * @param uuid - unique message ID (could be genertebd by si.gounitis.fursplugin.helpers.Tools.getNewUiid()
      * @param invoice - invoice data POJO
-     * @param salesBook - is invoice issued based on sales book invoice
      * @param signingCertAlias - name of signing certificate in a keystore
      * @return invoice ID
      */
-    String issueInvoice(String uuid, Invoice invoice, boolean salesBook, String signingCertAlias) throws FursPluginException;
+    String issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException;
 
     /**
      * check FURS conectivity

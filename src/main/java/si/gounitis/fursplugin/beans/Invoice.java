@@ -23,7 +23,7 @@ import si.gounitis.fursplugin.FursObject;
 import java.util.List;
 
 public class Invoice implements FursObject {
-    private boolean sallesBook;
+    private boolean sallesBook=false;
     private String taxNumber; // mandatory, len=8
     private String issueDateTime;
     private Character numberingStructure; // B per device, C - per premise
@@ -36,7 +36,7 @@ public class Invoice implements FursObject {
     private String paymentAmmount; // decimal dot two decimal digits
     private List<TaxesPerSeller> taxesPerSeller;
     private String operatorTaxNumber; // optional
-    private boolean foreignOperator; // optional
+    private boolean foreignOperator=false; // optional
     private String protectedId; // mandatory 32 characters
     private boolean subsequentSubmit; // optional
     private List<ReferenceInvoice> referenceInvoice; // optional

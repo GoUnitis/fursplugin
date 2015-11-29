@@ -23,7 +23,11 @@ import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.*;
 import si.gounitis.fursplugin.helpers.Tools;
+import si.gounitis.fursplugin.impl.FursPluginJson;
 import si.gounitis.fursplugin.impl.FursPluginSOAP;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestInvoice {
     public TestInvoice() {
@@ -33,44 +37,73 @@ public class TestInvoice {
         System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
         //System.setProperty("javax.net.debug", "all");
     }
-
-    @Test
+    //@Test
     public void testInvoiceCacheRegister() {
 
-        boolean salesBook=false;
-        FursPlugin plugin= new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-        //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-
-        Premise premise=new Premise();
-        premise.setTaxNumber("12345678");
-        premise.setPremiseId("36CF"); // 1-20 znakov brez presledkov (a-z,A-Z,0-9)
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
 
         Invoice invoice = new Invoice();
+        invoice.setSallesBook(false);
+        invoice.setTaxNumber("10075623");
+        invoice.setIssueDateTime("2015-11-22T09:55:25");
+        invoice.setNumberingStructure('B');
+        invoice.setPremiseId("36CF");
+        invoice.setDeviceId("REG12");
+        invoice.setInvoiceNumber("205");
+        invoice.setInvoiceAmmount("30.00");
+        invoice.setPaymentAmmount("36.61");
+        List<TaxesPerSeller> taxesPerSellerList = new ArrayList<TaxesPerSeller>();
+        TaxesPerSeller taxesPerSeller = new TaxesPerSeller();
+        taxesPerSeller.setTaxRate("22.00");
+        taxesPerSeller.setTaxableAmmount("30.00");
+        taxesPerSeller.setTaxAmmount("6,61");
+        taxesPerSellerList.add(taxesPerSeller);
+        invoice.setTaxesPerSeller(taxesPerSellerList);
+        invoice.setProtectedId("8202f0f963e37a2258b034cf8ae7bbc1");
+        invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.issueInvoice(Tools.getNewUiid(), invoice, salesBook, premise, "signcert");
+            plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    @Test
+    public void testInvoiceCacheRegisterNoVat() {
 
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
+
+        Invoice invoice = new Invoice();
+        invoice.setSallesBook(false);
+        invoice.setTaxNumber("10075623");
+        invoice.setIssueDateTime("2015-11-22T09:55:25");
+        invoice.setNumberingStructure('B');
+        invoice.setPremiseId("36CF");
+        invoice.setDeviceId("REG12");
+        invoice.setInvoiceNumber("205");
+        invoice.setInvoiceAmmount("30.00");
+        invoice.setPaymentAmmount("30.00");
+        invoice.setTaxesPerSeller(null);
+        invoice.setProtectedId("8202f0f963e37a2258b034cf8ae7bbc1");
+        invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
+
+        try {
+            plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+        } catch (FursPluginException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //@Test
     public void testInvoiceSalesBook() {
 
-        boolean salesBook=true;
-        FursPlugin plugin= new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-        //FursPlugin plugin = new FursPluginAxis2("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-
-        Premise premise=new Premise();
-        premise.setTaxNumber("12345678");
-        premise.setPremiseId("36CF"); // 1-20 znakov brez presledkov (a-z,A-Z,0-9)
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
 
         Invoice invoice = new Invoice();
 
         try {
-            plugin.issueInvoice(Tools.getNewUiid(), invoice, salesBook , premise, "signcert");
+            plugin.issueInvoice(Tools.getNewUiid(), invoice , "signcert");
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }

@@ -30,10 +30,8 @@ import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.ParseException;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
-import si.gounitis.fursplugin.beans.CadastralData;
-import si.gounitis.fursplugin.beans.Invoice;
-import si.gounitis.fursplugin.beans.Premise;
-import si.gounitis.fursplugin.beans.SwProvider;
+import si.gounitis.fursplugin.beans.*;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -103,19 +101,18 @@ public class FursPluginJson implements FursPlugin {
      *
      * @param uuid - unique message ID (could be genertebd by si.gounitis.fursplugin.helpers.Tools.getNewUiid()
      * @param invoice - invoice data POJO
-     * @param salesBook - is invoice issued based on sales book invoice
      * @param signingCertAlias - name of signing certificate in a keystore
      * @return invoice ID
      */
-    public String issueInvoice(String uuid, Invoice invoice, boolean salesBook, String signingCertAlias) throws FursPluginException{
+    public String issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException{
         Base64 base64 = new Base64();
 
         ParseKeypair parseKeypair = new ParseKeypair(signingCertAlias);
         String jwsHeader = getJwsHeader(parseKeypair);
-        String premiseRequest = getInvoice(uuid, invoice);
+        String invoceRequest = getInvoice(uuid, invoice);
         String token= new String(base64.encodeBase64URLSafe(jwsHeader.getBytes(StandardCharsets.UTF_8)))+
                 "."+
-                new String(base64.encodeBase64URLSafe(premiseRequest.getBytes(StandardCharsets.UTF_8)));
+                new String(base64.encodeBase64URLSafe(invoceRequest.getBytes(StandardCharsets.UTF_8)));
 
         String signedToken=sign(token,parseKeypair);
         String jsonRequest="{\"token\" :\""+signedToken+"\"}";
@@ -168,13 +165,51 @@ public class FursPluginJson implements FursPlugin {
         invoiceRequest.put("Header",header);
 
         // <Invoice>
-        Map businessPremise = new LinkedHashMap();
-        businessPremise.put("TaxNumber", Integer.parseInt(invoice.getTaxNumber()));
-        businessPremise.put("IssueDateTime", invoice.getIssueDateTime());
-        businessPremise.put("NumberingStructure", ""+invoice.getNumberingStructure());
+        Map invoiceMap = new LinkedHashMap();
+        invoiceMap.put("TaxNumber", Integer.parseInt(invoice.getTaxNumber()));
+        invoiceMap.put("IssueDateTime", invoice.getIssueDateTime());
+        invoiceMap.put("NumberingStructure", ""+invoice.getNumberingStructure());
+        // <InvoiceIdentifier>
+        Map invoiceIdentifier = new LinkedHashMap();
+        invoiceIdentifier.put("BusinessPremiseID",invoice.getPremiseId());
+        invoiceIdentifier.put("ElectronicDeviceID",invoice.getDeviceId());
+        invoiceIdentifier.put("InvoiceNumber",invoice.getInvoiceNumber());
+        invoiceMap.put("InvoiceIdentifier",invoiceIdentifier);
 
+        invoiceMap.put("InvoiceAmount",Float.parseFloat(invoice.getInvoiceAmmount()));
+        invoiceMap.put("PaymentAmount",Float.parseFloat(invoice.getPaymentAmmount()));
+
+        if (invoice.getTaxesPerSeller()!=null) {
+            List taxPerSeller = new LinkedList();
+            Map m0 = new LinkedHashMap();
+            List vat= new LinkedList();
+            for (TaxesPerSeller tps:invoice.getTaxesPerSeller()) {
+                Map vatContent = new LinkedHashMap();
+                vatContent.put("TaxRate", Float.parseFloat(tps.getTaxRate()));
+                vatContent.put("TaxableAmount", Float.parseFloat(tps.getTaxableAmmount()));
+                vatContent.put("TaxAmount", Float.parseFloat(tps.getTaxableAmmount()));
+                vat.add(vatContent);
+            }
+            m0.put("VAT", vat);
+            //m0.put("ExemptVATTaxableAmount", Float.parseFloat(invoice.getInvoiceAmmount()));
+            taxPerSeller.add(m0);
+            invoiceMap.put("TaxesPerSeller", taxPerSeller);
+
+        } else {
+            List taxPerSeller = new LinkedList();
+            Map m0 = new LinkedHashMap();
+            m0.put("ExemptVATTaxableAmount", Float.parseFloat(invoice.getInvoiceAmmount()));
+            taxPerSeller.add(m0);
+            invoiceMap.put("TaxesPerSeller", taxPerSeller);
+        }
+        if (invoice.getOperatorTaxNumber()!=null ) invoiceMap.put("OperatorTaxNumber",invoice.getOperatorTaxNumber());
+        invoiceMap.put("ProtectedID",invoice.getProtectedId());
+        invoiceMap.put("SpecialNotes",invoice.getAux());
+
+        invoiceRequest.put("Invoice",invoiceMap);
 
         obj.put("InvoiceRequest",invoiceRequest);
+        System.out.println(JSONValue.toJSONString(obj));
         return JSONValue.toJSONString(obj);
     }
 
