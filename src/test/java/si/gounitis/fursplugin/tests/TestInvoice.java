@@ -70,12 +70,10 @@ public class TestInvoice {
         taxesPerSeller.setVat(vatList);
         taxesPerSellerList.add(taxesPerSeller);
         invoice.setTaxesPerSeller(taxesPerSellerList);
-
-        invoice.setProtectedId("8202f0f963e37a2258b034cf8ae7bbc1");
         invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            String rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
             System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
@@ -98,11 +96,11 @@ public class TestInvoice {
         invoice.setInvoiceAmmount("30.00");
         invoice.setPaymentAmmount("30.00");
         invoice.setTaxesPerSeller(null);
-        invoice.setProtectedId("8202f0f963e37a2258b034cf8ae7bbc1");
         invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
@@ -116,7 +114,8 @@ public class TestInvoice {
         Invoice invoice = new Invoice();
 
         try {
-            plugin.issueInvoice(Tools.getNewUiid(), invoice , "signcert");
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }

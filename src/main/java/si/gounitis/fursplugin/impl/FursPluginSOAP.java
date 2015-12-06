@@ -23,10 +23,7 @@ import org.w3c.dom.Element;
 import si.gounitis.fursplugin.FursObject;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
-import si.gounitis.fursplugin.beans.CadastralData;
-import si.gounitis.fursplugin.beans.Invoice;
-import si.gounitis.fursplugin.beans.Premise;
-import si.gounitis.fursplugin.beans.SwProvider;
+import si.gounitis.fursplugin.beans.*;
 import si.gounitis.fursplugin.helpers.Sign;
 
 import javax.xml.namespace.QName;
@@ -140,7 +137,7 @@ public class FursPluginSOAP implements FursPlugin{
      * @param signingCertAlias - name of signing certificate in a keystore
      * @return invoice ID
      */
-    public String issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException{
+    public InvoceReturnValue issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException{
         checkInput(uuid, invoice);
 
         try {
@@ -371,7 +368,6 @@ public class FursPluginSOAP implements FursPlugin{
         os.flush();
         os.close();
     }
-
 
     private void checkInput(String id, FursObject obj) throws FursPluginException{
         if (id!=null && id.length()==ID_LENGTH && obj!=null || obj.validateData()) {

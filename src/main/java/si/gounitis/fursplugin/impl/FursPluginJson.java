@@ -18,6 +18,7 @@
 //********************************************************************************
 package si.gounitis.fursplugin.impl;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -29,6 +30,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.ParseException;
+import si.gounitis.fursplugin.FursObject;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.*;
@@ -46,6 +48,11 @@ import org.json.simple.parser.JSONParser;
 import si.gounitis.fursplugin.helpers.ParseKeypair;
 
 public class FursPluginJson implements FursPlugin {
+    private static final String invoiceDateFormat="yyyy-MM-dd'T'HH:mm:ss";
+    private static final String zoiDateFormat="dd.MM.yyyy HH:mm:ss";
+
+    private static final int ID_LENGTH=36;
+
     private String url;
 
     /**
@@ -74,7 +81,7 @@ public class FursPluginJson implements FursPlugin {
                 "."+
                 new String(base64.encodeBase64URLSafe(premiseRequest.getBytes(StandardCharsets.UTF_8)));
 
-        String signedToken=sign(token,parseKeypair);
+        String signedToken=generateToken(token, parseKeypair);
         String jsonRequest="{\"token\" :\""+signedToken+"\"}";
         try {
             Map<String, String> httpHeaders= new HashMap<String, String>();
@@ -107,17 +114,19 @@ public class FursPluginJson implements FursPlugin {
      * @param signingCertAlias - name of signing certificate in a keystore
      * @return invoice ID
      */
-    public String issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException{
+    public InvoceReturnValue issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException{
         Base64 base64 = new Base64();
+
+        checkInput(uuid, invoice);
 
         ParseKeypair parseKeypair = new ParseKeypair(signingCertAlias);
         String jwsHeader = getJwsHeader(parseKeypair);
-        String invoceRequest = getInvoice(uuid, invoice);
+        InvoceReturnValue invoceRequest = getInvoice(uuid, invoice, parseKeypair);
         String token= new String(base64.encodeBase64URLSafe(jwsHeader.getBytes(StandardCharsets.UTF_8)))+
                 "."+
-                new String(base64.encodeBase64URLSafe(invoceRequest.getBytes(StandardCharsets.UTF_8)));
+                new String(base64.encodeBase64URLSafe(invoceRequest.getInvoiceReq().getBytes(StandardCharsets.UTF_8)));
 
-        String signedToken=sign(token,parseKeypair);
+        String signedToken=generateToken(token, parseKeypair);
         String jsonRequest="{\"token\" :\""+signedToken+"\"}";
         try {
             Map<String, String> httpHeaders= new HashMap<String, String>();
@@ -133,7 +142,9 @@ public class FursPluginJson implements FursPlugin {
             
             //System.out.println(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8));
             
-            return invoiceParseResult(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8),ResponseType.INVOICE);
+            String result = invoiceParseResult(new String(base64.decode(jwsPayload.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8),ResponseType.INVOICE);
+            invoceRequest.setUniqueInvoiceID(result);
+            return invoceRequest;
         } catch (IOException e) {
             throw new FursPluginException(e);
         } catch (ParseException e) {
@@ -156,7 +167,8 @@ public class FursPluginJson implements FursPlugin {
         }
     }
 
-    private String getInvoice(String uuid, Invoice invoice) {
+    private InvoceReturnValue getInvoice(String uuid, Invoice invoice,ParseKeypair parseKeypair) {
+        InvoceReturnValue invoceReturnValue = new InvoceReturnValue();
         Map obj=new LinkedHashMap();
         Map invoiceRequest = new LinkedHashMap();
 
@@ -209,7 +221,8 @@ public class FursPluginJson implements FursPlugin {
             invoiceMap.put("TaxesPerSeller", taxPerSeller);
         }
         if (invoice.getOperatorTaxNumber()!=null ) invoiceMap.put("OperatorTaxNumber",invoice.getOperatorTaxNumber());
-        invoiceMap.put("ProtectedID",invoice.getProtectedId());
+        String zoi=getProtectedId(invoice, parseKeypair);
+        invoiceMap.put("ProtectedID",zoi);
         invoiceMap.put("SpecialNotes",invoice.getAux());
 
         invoiceRequest.put("Invoice",invoiceMap);
@@ -217,8 +230,9 @@ public class FursPluginJson implements FursPlugin {
         obj.put("InvoiceRequest",invoiceRequest);
 
         //System.out.println(JSONValue.toJSONString(obj));
-
-        return JSONValue.toJSONString(obj);
+        invoceReturnValue.setZoi(zoi);
+        invoceReturnValue.setInvoiceReq(JSONValue.toJSONString(obj));
+        return invoceReturnValue;
     }
 
     private String getBusinessPremiseRequest(String uuid, Premise premise) throws FursPluginException {
@@ -359,13 +373,9 @@ public class FursPluginJson implements FursPlugin {
         System.out.println();
     }
 
-    private String sign(String token, ParseKeypair parseKeypair) {
+    private String generateToken(String token, ParseKeypair parseKeypair) {
         try {
-            Signature sig = Signature.getInstance("SHA256withRSA");
-            sig.initSign(parseKeypair.getPrivateKey());
-            sig.update(token.getBytes(StandardCharsets.UTF_8));
-            byte[] signature = sig.sign();
-            String sign = new String(Base64.encodeBase64URLSafe(signature));
+            String sign = new String(Base64.encodeBase64URLSafe(sign(token,parseKeypair)));
             return token+"."+sign;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
@@ -376,6 +386,33 @@ public class FursPluginJson implements FursPlugin {
         }
     }
 
+    private String getProtectedId(Invoice invoice, ParseKeypair parseKeypair) {
+
+        try {
+            SimpleDateFormat invFrm = new SimpleDateFormat(invoiceDateFormat);
+            SimpleDateFormat zoiFrm = new SimpleDateFormat(zoiDateFormat);
+            Date invDate = invFrm.parse(invoice.getIssueDateTime());
+            String dateZoiType=zoiFrm.format(invDate);
+            String tmp = invoice.getTaxNumber()+dateZoiType+invoice.getInvoiceNumber()+invoice.getPremiseId()+invoice.getDeviceId()+invoice.getInvoiceAmmount();
+            byte[] signed = sign ( tmp, parseKeypair);
+            return DigestUtils.md5Hex(signed);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        } catch (SignatureException e) {
+            throw new RuntimeException(e);
+        } catch (java.text.ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private byte[] sign(String value, ParseKeypair parseKeypair) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        Signature sig = Signature.getInstance("SHA256withRSA");
+        sig.initSign(parseKeypair.getPrivateKey());
+        sig.update(value.getBytes(StandardCharsets.UTF_8));
+        return sig.sign();
+    }
 
     private String invoiceParseResult(String jwsPayload, ResponseType type) {
         JSONObject obj = (JSONObject) JSONValue.parse(jwsPayload);
@@ -402,6 +439,13 @@ public class FursPluginJson implements FursPlugin {
             }
         };
         return containerFactory;
+    }
+
+    private void checkInput(String id, FursObject obj) throws FursPluginException{
+        if (id!=null && id.length()==ID_LENGTH && obj!=null && obj.validateData()) {
+            return;
+        }
+        throw new FursPluginException("Invalid arguments");
     }
 
     private enum ResponseType {

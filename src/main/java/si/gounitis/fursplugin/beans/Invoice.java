@@ -21,8 +21,12 @@ package si.gounitis.fursplugin.beans;
 import si.gounitis.fursplugin.FursObject;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Invoice implements FursObject {
+    private final String  datePattern = "\\A[0-9]{4}[-][0-9]{2}[-][0-9]{2}[T][0-9]{2}[:][0-9]{2}[:][0-9]{2}\\z";
+
     private boolean sallesBook=false;
     private String taxNumber; // mandatory, len=8
     private String issueDateTime;
@@ -37,7 +41,6 @@ public class Invoice implements FursObject {
     private List<TaxesPerSeller> taxesPerSeller;
     private String operatorTaxNumber; // optional
     private boolean foreignOperator=false; // optional
-    private String protectedId; // mandatory 32 characters
     private boolean subsequentSubmit; // optional
     private List<ReferenceInvoice> referenceInvoice; // optional
     // private List<ReferenceSalesBook> referenceSalesBook; // optional
@@ -97,10 +100,6 @@ public class Invoice implements FursObject {
 
     public boolean isForeignOperator() {
         return foreignOperator;
-    }
-
-    public String getProtectedId() {
-        return protectedId;
     }
 
     public boolean isSubsequentSubmit() {
@@ -171,10 +170,6 @@ public class Invoice implements FursObject {
         this.foreignOperator = foreignOperator;
     }
 
-    public void setProtectedId(String protectedId) {
-        this.protectedId = protectedId;
-    }
-
     public void setSubsequentSubmit(boolean subsequentSubmit) {
         this.subsequentSubmit = subsequentSubmit;
     }
@@ -188,8 +183,15 @@ public class Invoice implements FursObject {
     }
 
     public boolean validateData() {
+        Pattern ptn;
+
         if (sallesBook)
             throw new RuntimeException("Sellers Book not suppotred yet. Please support project if you need sellers book implementation");
+        ptn = Pattern.compile(datePattern);
+        Matcher mtc = ptn.matcher(issueDateTime);
+        if(!mtc.find())
+            throw new RuntimeException("Date format must be dd-MM-yyyyTHH:mm:ss");
+
 
         return true;
     }

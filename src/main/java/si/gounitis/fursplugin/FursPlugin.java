@@ -18,6 +18,7 @@
 //********************************************************************************
 package si.gounitis.fursplugin;
 
+import si.gounitis.fursplugin.beans.InvoceReturnValue;
 import si.gounitis.fursplugin.beans.Invoice;
 import si.gounitis.fursplugin.beans.Premise;
 
@@ -40,7 +41,7 @@ public interface FursPlugin {
      * @param signingCertAlias - name of signing certificate in a keystore
      * @return invoice ID
      */
-    String issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException;
+    InvoceReturnValue issueInvoice(String uuid, Invoice invoice, String signingCertAlias) throws FursPluginException;
 
     /**
      * check FURS conectivity
