@@ -190,7 +190,7 @@ public class Invoice implements FursObject {
         ptn = Pattern.compile(datePattern);
         Matcher mtc = ptn.matcher(issueDateTime);
         if(!mtc.find())
-            throw new RuntimeException("Date format must be dd-MM-yyyyTHH:mm:ss");
+            throw new RuntimeException("Date format must be yyyy-MM-ddTHH:mm:ss");
 
 
         return true;
