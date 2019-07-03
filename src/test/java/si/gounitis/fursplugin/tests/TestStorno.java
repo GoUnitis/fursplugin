@@ -1,22 +1,5 @@
-//********************************************************************************
-//
-//    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
-//
-//    This program is free software; you can redistribute it and/or modify
-//    it under the terms of the GNU Lesser General Public License as published by
-//    the Free Software Foundation; either version 2.1 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU Lesser General Public License for more details.
-//
-//********************************************************************************
-//    Revision history:
-//        12.10.2015: J. Zelic - First Version
-//********************************************************************************
 package si.gounitis.fursplugin.tests;
+
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +12,7 @@ import si.gounitis.fursplugin.impl.FursPluginJson;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestInvoice {
+public class TestStorno {
 
     @Before
     public void before() {
@@ -41,7 +24,7 @@ public class TestInvoice {
     }
 
     @Test
-    public void testInvoiceCacheRegister() {
+    public void testInvoiceCacheRegisterStorno() {
 
         FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
 
@@ -52,7 +35,55 @@ public class TestInvoice {
         invoice.setNumberingStructure('B');
         invoice.setPremiseId("36CF");
         invoice.setDeviceId("REG12");
-        invoice.setInvoiceNumber("205");
+        invoice.setInvoiceNumber("206");
+        invoice.setInvoiceAmmount("0.00");
+        invoice.setPaymentAmmount("0.00");
+
+        List<TaxesPerSeller> taxesPerSellerList = new ArrayList<TaxesPerSeller>();
+        TaxesPerSeller taxesPerSeller = new TaxesPerSeller();
+
+        List<Vat> vatList = new ArrayList<Vat>();
+        Vat vat1 = new Vat();
+        vat1.setTaxRate("22.00");
+        vat1.setTaxableAmmount("0.00");
+        vat1.setTaxAmmount("0.00");
+        vatList.add(vat1);
+
+        taxesPerSeller.setVat(vatList);
+        taxesPerSellerList.add(taxesPerSeller);
+        invoice.setTaxesPerSeller(taxesPerSellerList);
+
+        ReferenceInvoice referenceInvoice = new ReferenceInvoice();
+        referenceInvoice.setReferenceInvoiceDeviceId("REG12");
+        referenceInvoice.setReferenceInvoiceInvoiceNumber("205");
+        referenceInvoice.setReferenceInvoiceIssueDateTime("2015-11-22T09:55:25");
+        referenceInvoice.setReferenceInvoicePremiseId("36CF");
+
+        invoice.setReferenceInvoice(referenceInvoice);
+
+        invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
+
+        try {
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            System.out.println(rv);
+        } catch (FursPluginException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testInvoiceCacheRegisterPartialStorno() {
+
+        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
+
+        Invoice invoice = new Invoice();
+        invoice.setSallesBook(false);
+        invoice.setTaxNumber("10075623");
+        invoice.setIssueDateTime("2015-11-22T09:55:25");
+        invoice.setNumberingStructure('B');
+        invoice.setPremiseId("36CF");
+        invoice.setDeviceId("REG12");
+        invoice.setInvoiceNumber("206");
         invoice.setInvoiceAmmount("50.00");
         invoice.setPaymentAmmount("58.51");
 
@@ -74,6 +105,15 @@ public class TestInvoice {
         taxesPerSeller.setVat(vatList);
         taxesPerSellerList.add(taxesPerSeller);
         invoice.setTaxesPerSeller(taxesPerSellerList);
+
+        ReferenceInvoice referenceInvoice = new ReferenceInvoice();
+        referenceInvoice.setReferenceInvoiceDeviceId("REG12");
+        referenceInvoice.setReferenceInvoiceInvoiceNumber("205");
+        referenceInvoice.setReferenceInvoiceIssueDateTime("2015-11-22T09:55:25");
+        referenceInvoice.setReferenceInvoicePremiseId("36CF");
+
+        invoice.setReferenceInvoice(referenceInvoice);
+
         invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
@@ -82,49 +122,5 @@ public class TestInvoice {
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    //@Test
-    public void testInvoiceCacheRegisterNoVat() {
-
-        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
-
-        Invoice invoice = new Invoice();
-        invoice.setSallesBook(false);
-        invoice.setTaxNumber("10075623");
-        invoice.setIssueDateTime("2015-11-22T09:55:25");
-        invoice.setNumberingStructure('B');
-        invoice.setPremiseId("36CF");
-        invoice.setDeviceId("REG12");
-        invoice.setInvoiceNumber("205");
-        invoice.setInvoiceAmmount("30.00");
-        invoice.setPaymentAmmount("30.00");
-        invoice.setTaxesPerSeller(null);
-        invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
-
-        try {
-            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
-            System.out.println(rv);
-        } catch (FursPluginException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    //@Test
-    public void testInvoiceSalesBook() {
-
-        FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002//v1/cash_registers/invoices");
-
-        Invoice invoice = new Invoice();
-
-        try {
-            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
-            System.out.println(rv);
-        } catch (FursPluginException e) {
-            throw new RuntimeException(e);
-        }
-
-
     }
 }
-

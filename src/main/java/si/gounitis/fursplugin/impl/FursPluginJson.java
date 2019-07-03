@@ -3,8 +3,8 @@
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation; either version 2 of the License, or
+//    it under the terms of the GNU Lesser General Public License as published by
+//    the Free Software Foundation; either version 2.1 of the License, or
 //    (at your option) any later version.
 //
 //    This program is distributed in the hope that it will be useful,
@@ -192,8 +192,8 @@ public class FursPluginJson implements FursPlugin {
         invoiceIdentifier.put("InvoiceNumber",invoice.getInvoiceNumber());
         invoiceMap.put("InvoiceIdentifier",invoiceIdentifier);
 
-        invoiceMap.put("InvoiceAmount",Float.parseFloat(invoice.getInvoiceAmmount()));
-        invoiceMap.put("PaymentAmount",Float.parseFloat(invoice.getPaymentAmmount()));
+        if (invoice.getInvoiceAmmount()!=null) invoiceMap.put("InvoiceAmount",Float.parseFloat(invoice.getInvoiceAmmount()));
+        if (invoice.getPaymentAmmount()!=null) invoiceMap.put("PaymentAmount",Float.parseFloat(invoice.getPaymentAmmount()));
 
         if (invoice.getTaxesPerSeller()!=null) {
             List taxPerSeller = new LinkedList();
@@ -223,6 +223,21 @@ public class FursPluginJson implements FursPlugin {
         if (invoice.getOperatorTaxNumber()!=null ) invoiceMap.put("OperatorTaxNumber",invoice.getOperatorTaxNumber());
         String zoi=getProtectedId(invoice, parseKeypair);
         invoiceMap.put("ProtectedID",zoi);
+        // <ReferenceInvoice>
+        if (invoice.getReferenceInvoice()!=null) {
+            List li0 = new LinkedList();
+            Map referenceInvoice = new LinkedHashMap();
+            Map referenceInvoiceIdentifier= new LinkedHashMap();
+            referenceInvoiceIdentifier.put("BusinessPremiseID",invoice.getReferenceInvoice().getReferenceInvoicePremiseId());
+            referenceInvoiceIdentifier.put("ElectronicDeviceID",invoice.getReferenceInvoice().getReferenceInvoiceDeviceId());
+            referenceInvoiceIdentifier.put("InvoiceNumber",invoice.getReferenceInvoice().getReferenceInvoiceInvoiceNumber());
+
+            referenceInvoice.put("ReferenceInvoiceIdentifier",referenceInvoiceIdentifier);
+            referenceInvoice.put("ReferenceInvoiceIssueDateTime",invoice.getReferenceInvoice().getReferenceInvoiceIssueDateTime());
+            li0.add(referenceInvoice);
+            invoiceMap.put("ReferenceInvoice", li0);
+        }
+
         invoiceMap.put("SpecialNotes",invoice.getAux());
 
         invoiceRequest.put("Invoice",invoiceMap);

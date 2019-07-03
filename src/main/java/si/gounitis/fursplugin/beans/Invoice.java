@@ -3,8 +3,8 @@
 //    Copyright (C) 2015  GoUnitis, Jurij Zelic s.p.
 //
 //    This program is free software; you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation; either version 2 of the License, or
+//    it under the terms of the GNU Lesser General Public License as published by
+//    the Free Software Foundation; either version 2.1 of the License, or
 //    (at your option) any later version.
 //
 //    This program is distributed in the hope that it will be useful,
@@ -42,7 +42,7 @@ public class Invoice implements FursObject {
     private String operatorTaxNumber; // optional
     private boolean foreignOperator=false; // optional
     private boolean subsequentSubmit; // optional
-    private List<ReferenceInvoice> referenceInvoice; // optional
+    private ReferenceInvoice referenceInvoice; // optional
     // private List<ReferenceSalesBook> referenceSalesBook; // optional
     private String aux; // optional - auxiliary data
 
@@ -106,7 +106,7 @@ public class Invoice implements FursObject {
         return subsequentSubmit;
     }
 
-    public List<ReferenceInvoice> getReferenceInvoice() {
+    public ReferenceInvoice getReferenceInvoice() {
         return referenceInvoice;
     }
 
@@ -174,7 +174,7 @@ public class Invoice implements FursObject {
         this.subsequentSubmit = subsequentSubmit;
     }
 
-    public void setReferenceInvoice(List<ReferenceInvoice> referenceInvoice) {
+    public void setReferenceInvoice(ReferenceInvoice referenceInvoice) {
         this.referenceInvoice = referenceInvoice;
     }
 

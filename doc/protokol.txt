@@ -53,9 +53,14 @@ SOAPAction: /invoices/register
 </soapenv:Envelope>
 
 Pazi:
-Datumi morajo biti brez TZ
+Datumi morajo biti brez æasovne cone
 V X509Data mora biti
             <X509IssuerSerial>
               <X509IssuerName>CN=Tax CA Test, O=state-institutions, C=SI</X509IssuerName>
               <X509SerialNumber>2575988469811686647</X509SerialNumber>
             </X509IssuerSerial>
+            
+            
+            
+REST vmesnik
+Content-Type: application/json; charset=UTF-8

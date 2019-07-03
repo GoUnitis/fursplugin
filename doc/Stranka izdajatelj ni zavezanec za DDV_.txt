@@ -1,0 +1,8 @@
+Stranka izdajatelj ni zavezanec za DDV:
+
+<fu:InvoiceAmount>3.80</fu:InvoiceAmount>
+<fu:PaymentAmount>3.80</fu:PaymentAmount>
+<fu:TaxesPerSeller>'
+    <fu:ExemptVATTaxableAmount>3.80</fu:ExemptVATTaxableAmount>
+</fu:TaxesPerSeller>'
+
