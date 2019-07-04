@@ -35,19 +35,28 @@ public class TestStorno {
         invoice.setNumberingStructure('B');
         invoice.setPremiseId("36CF");
         invoice.setDeviceId("REG12");
+        // ce operator ima slo ds - sicer nastavis invoice.setForeignOperator(true);
+        invoice.setOperatorTaxNumber("41125029");
+        invoice.setCustomerVatNumber("38409747"); // optional - if invoice with VAT
         invoice.setInvoiceNumber("206");
-        invoice.setInvoiceAmmount("0.00");
-        invoice.setPaymentAmmount("0.00");
+        invoice.setInvoiceAmmount("-50.00");
+        invoice.setPaymentAmmount("-50.00");
 
+        // if You do not add taxesPerSellerList it is assumed thad issuer is not VAT liable
         List<TaxesPerSeller> taxesPerSellerList = new ArrayList<TaxesPerSeller>();
         TaxesPerSeller taxesPerSeller = new TaxesPerSeller();
 
         List<Vat> vatList = new ArrayList<Vat>();
         Vat vat1 = new Vat();
         vat1.setTaxRate("22.00");
-        vat1.setTaxableAmmount("0.00");
-        vat1.setTaxAmmount("0.00");
+        vat1.setTaxableAmmount("-20.00");
+        vat1.setTaxAmmount("-4.44");
         vatList.add(vat1);
+        Vat vat2 = new Vat();
+        vat2.setTaxRate("9.50");
+        vat2.setTaxableAmmount("-30.00");
+        vat2.setTaxAmmount("-2.85");
+        vatList.add(vat2);
 
         taxesPerSeller.setVat(vatList);
         taxesPerSellerList.add(taxesPerSeller);
@@ -83,24 +92,23 @@ public class TestStorno {
         invoice.setNumberingStructure('B');
         invoice.setPremiseId("36CF");
         invoice.setDeviceId("REG12");
+        // ce operator ima slo ds - sicer nastavis invoice.setForeignOperator(true);
+        invoice.setOperatorTaxNumber("41125029");
+        invoice.setCustomerVatNumber("38409747"); // optional - if invoice with VAT
         invoice.setInvoiceNumber("206");
-        invoice.setInvoiceAmmount("50.00");
-        invoice.setPaymentAmmount("58.51");
+        invoice.setInvoiceAmmount("-20.00");
+        invoice.setPaymentAmmount("-20.00");
 
+        // if You do not add taxesPerSellerList it is assumed thad issuer is not VAT liable
         List<TaxesPerSeller> taxesPerSellerList = new ArrayList<TaxesPerSeller>();
         TaxesPerSeller taxesPerSeller = new TaxesPerSeller();
 
         List<Vat> vatList = new ArrayList<Vat>();
         Vat vat1 = new Vat();
         vat1.setTaxRate("22.00");
-        vat1.setTaxableAmmount("30.00");
-        vat1.setTaxAmmount("6.61");
+        vat1.setTaxableAmmount("-20.00");
+        vat1.setTaxAmmount("-4.44");
         vatList.add(vat1);
-        Vat vat2 = new Vat();
-        vat2.setTaxRate("9.50");
-        vat2.setTaxableAmmount("20.00");
-        vat2.setTaxAmmount("1.90");
-        vatList.add(vat2);
 
         taxesPerSeller.setVat(vatList);
         taxesPerSellerList.add(taxesPerSeller);

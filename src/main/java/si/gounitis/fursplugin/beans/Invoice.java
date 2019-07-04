@@ -192,6 +192,8 @@ public class Invoice implements FursObject {
         if(!mtc.find())
             throw new RuntimeException("Date format must be yyyy-MM-ddTHH:mm:ss");
 
+        if (!this.isForeignOperator() && this.getOperatorTaxNumber()==null)
+            throw new RuntimeException("OperatorTaxNumber or ForeignOperator must be set");
 
         return true;
     }

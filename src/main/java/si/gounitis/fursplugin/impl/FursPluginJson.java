@@ -192,6 +192,12 @@ public class FursPluginJson implements FursPlugin {
         invoiceIdentifier.put("InvoiceNumber",invoice.getInvoiceNumber());
         invoiceMap.put("InvoiceIdentifier",invoiceIdentifier);
 
+        if (invoice.getCustomerVatNumber()!=null) invoiceMap.put("CustomerVATNumber",invoice.getCustomerVatNumber());
+        if (invoice.isForeignOperator()) {
+            invoiceMap.put("ForeignOperator",true);
+        } else {
+            invoiceMap.put("OperatorTaxNumber",Integer.parseInt(invoice.getOperatorTaxNumber()));
+        }
         if (invoice.getInvoiceAmmount()!=null) invoiceMap.put("InvoiceAmount",Float.parseFloat(invoice.getInvoiceAmmount()));
         if (invoice.getPaymentAmmount()!=null) invoiceMap.put("PaymentAmount",Float.parseFloat(invoice.getPaymentAmmount()));
 
@@ -220,7 +226,6 @@ public class FursPluginJson implements FursPlugin {
             taxPerSeller.add(m0);
             invoiceMap.put("TaxesPerSeller", taxPerSeller);
         }
-        if (invoice.getOperatorTaxNumber()!=null ) invoiceMap.put("OperatorTaxNumber",invoice.getOperatorTaxNumber());
         String zoi=getProtectedId(invoice, parseKeypair);
         invoiceMap.put("ProtectedID",zoi);
         // <ReferenceInvoice>
