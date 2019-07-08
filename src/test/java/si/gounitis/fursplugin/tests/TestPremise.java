@@ -18,7 +18,12 @@
 //********************************************************************************
 package si.gounitis.fursplugin.tests;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.Address;
@@ -28,8 +33,18 @@ import si.gounitis.fursplugin.beans.SwProvider;
 import si.gounitis.fursplugin.helpers.Tools;
 import si.gounitis.fursplugin.impl.FursPluginJson;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource("classpath:test.properties")
 public class TestPremise {
-    public TestPremise() {
+
+    @Value("${issuer.vat}")
+    public String issuerVat;
+
+    @Value("${issuer.signcert.alias}")
+    public String signingCertAlias;
+
+    @Before
+    public void before() {
         System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
         System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
@@ -42,32 +57,32 @@ public class TestPremise {
         FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/invoices/register");
 
         Premise premise=new Premise();
-        premise.setTaxNumber("10075623");
+        premise.setTaxNumber(issuerVat);
         premise.setPremiseId("36CF"); // 1-20 znakov brez presledkov (a-z,A-Z,0-9)
-        CadastralData cadastralData = new CadastralData(); // èe je nepremièen objekt
-        cadastralData.setCadastralCommunityNumber("228"); // max 4 cifre - èe je nepremièen objekt
-        cadastralData.setCadastralBuildingNumber("123"); // max 5 cifer - èe je nepremièen objekt
-        cadastralData.setCadastralBuildingPartNumber("5"); // max 4 cifre - èe je nepremièen objekt
+        CadastralData cadastralData = new CadastralData(); // ï¿½e je nepremiï¿½en objekt
+        cadastralData.setCadastralCommunityNumber("228"); // max 4 cifre - ï¿½e je nepremiï¿½en objekt
+        cadastralData.setCadastralBuildingNumber("123"); // max 5 cifer - ï¿½e je nepremiï¿½en objekt
+        cadastralData.setCadastralBuildingPartNumber("5"); // max 4 cifre - ï¿½e je nepremiï¿½en objekt
         premise.setCadastralData(cadastralData);
-        Address address = new Address(); // èe je neprremièen objekt
-        address.setStreet("Dolenjska ceta"); // èe je neprremièen objekt
-        address.setNumber("5"); // èe je neprremièen objekt
-        address.setNumberAd("A"); // èe je neprremièen objekt in obstaja dodatek k hišni številki
+        Address address = new Address(); // ï¿½e je neprremiï¿½en objekt
+        address.setStreet("Dolenjska ceta"); // ï¿½e je neprremiï¿½en objekt
+        address.setNumber("5"); // ï¿½e je neprremiï¿½en objekt
+        address.setNumberAd("A"); // ï¿½e je neprremiï¿½en objekt in obstaja dodatek k hiï¿½ni ï¿½tevilki
         address.setTown("Kranj");
         address.setPostName("Kranj");
         address.setPostNumber("3221");
         premise.setAdress(address);
-       // premise.setMovablePremise('A'); // A – premièen objekt (npr. prevozno sredstvo, premièna stojnica) ali B – objekt na stalni lokaciji (npr. stojnica na tržnici, kiosk) ali C – posamezna elektronska naprava za izdajo raèunov ali vezana knjiga raèunov v primerih, ko zavezanec ne uporablja drugega poslovnega prostora
+       // premise.setMovablePremise('A'); // A ï¿½ premiï¿½en objekt (npr. prevozno sredstvo, premiï¿½na stojnica) ali B ï¿½ objekt na stalni lokaciji (npr. stojnica na trï¿½nici, kiosk) ali C ï¿½ posamezna elektronska naprava za izdajo raï¿½unov ali vezana knjiga raï¿½unov v primerih, ko zavezanec ne uporablja drugega poslovnega prostora
         premise.setPremiseValidityDate("2020-01-22"); // od kdaj je prostor registiran
-        //premise.setClosePremise(true); // èe zapisramo objekt
+        //premise.setClosePremise(true); // ï¿½e zapisramo objekt
         SwProvider swProvider = new SwProvider();
-        swProvider.setVat("72114916"); // èe je slovenski dobavitelj SW
-        //swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
+        swProvider.setVat("72114916"); // ï¿½e je slovenski dobavitelj SW
+        //swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // ï¿½e je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.registerPremise(Tools.getNewUiid(), premise, "signcert");
+            plugin.registerPremise(Tools.getNewUiid(), premise, signingCertAlias);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
@@ -81,19 +96,19 @@ public class TestPremise {
         FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/invoices/register");
 
         Premise premise=new Premise();
-        premise.setTaxNumber("10075623");
+        premise.setTaxNumber(issuerVat);
         premise.setPremiseId("36CF"); // 1-20 znakov brez presledkov (a-z,A-Z,0-9)
-        premise.setMovablePremise('A'); // A – premièen objekt (npr. prevozno sredstvo, premièna stojnica) ali B – objekt na stalni lokaciji (npr. stojnica na tržnici, kiosk) ali C – posamezna elektronska naprava za izdajo raèunov ali vezana knjiga raèunov v primerih, ko zavezanec ne uporablja drugega poslovnega prostora
+        premise.setMovablePremise('A'); // A ï¿½ premiï¿½en objekt (npr. prevozno sredstvo, premiï¿½na stojnica) ali B ï¿½ objekt na stalni lokaciji (npr. stojnica na trï¿½nici, kiosk) ali C ï¿½ posamezna elektronska naprava za izdajo raï¿½unov ali vezana knjiga raï¿½unov v primerih, ko zavezanec ne uporablja drugega poslovnega prostora
         premise.setPremiseValidityDate("2015-01-22"); // od kdaj je prostor registiran
-        //premise.setClosePremise(true); // èe zapisramo objekt
+        //premise.setClosePremise(true); // ï¿½e zapisramo objekt
         SwProvider swProvider = new SwProvider();
-        //swProvider.setVat("72114916"); // èe je slovenski dobavitelj SW
-        swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
+        //swProvider.setVat("72114916"); // ï¿½e je slovenski dobavitelj SW
+        swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // ï¿½e je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.registerPremise(Tools.getNewUiid(), premise, "signcert");
+            plugin.registerPremise(Tools.getNewUiid(), premise, signingCertAlias);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }
@@ -107,19 +122,19 @@ public class TestPremise {
         FursPlugin plugin= new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/invoices/register");
 
         Premise premise=new Premise();
-        premise.setTaxNumber("10075623");
+        premise.setTaxNumber(issuerVat);
         premise.setPremiseId("36CF"); // 1-20 znakov brez presledkov (a-z,A-Z,0-9)
-        premise.setMovablePremise('A'); // A – premièen objekt (npr. prevozno sredstvo, premièna stojnica) ali B – objekt na stalni lokaciji (npr. stojnica na tržnici, kiosk) ali C – posamezna elektronska naprava za izdajo raèunov ali vezana knjiga raèunov v primerih, ko zavezanec ne uporablja drugega poslovnega prostora
+        premise.setMovablePremise('A'); // A ï¿½ premiï¿½en objekt (npr. prevozno sredstvo, premiï¿½na stojnica) ali B ï¿½ objekt na stalni lokaciji (npr. stojnica na trï¿½nici, kiosk) ali C ï¿½ posamezna elektronska naprava za izdajo raï¿½unov ali vezana knjiga raï¿½unov v primerih, ko zavezanec ne uporablja drugega poslovnega prostora
         premise.setPremiseValidityDate("2015-01-22"); // od kdaj je prostor registiran
-        premise.setClosePremise(true); // èe zapisramo objekt
+        premise.setClosePremise(true); // ï¿½e zapisramo objekt
         SwProvider swProvider = new SwProvider();
-        swProvider.setVat("72114916"); // èe je slovenski dobavitelj SW
-        //swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // èe je tuj dobavitelj SW
+        swProvider.setVat("72114916"); // ï¿½e je slovenski dobavitelj SW
+        //swProvider.setForeignTitle("Kebab gmbh, BurekStr 22, Munchen"); // ï¿½e je tuj dobavitelj SW
         premise.setSwProvider(swProvider);
         premise.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            plugin.registerPremise(Tools.getNewUiid(), premise, "signcert");
+            plugin.registerPremise(Tools.getNewUiid(), premise, signingCertAlias);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
         }

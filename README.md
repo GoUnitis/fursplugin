@@ -1,21 +1,26 @@
 # fursplugin
-Plugin do FURS za davène blagajne
+Plugin do FURS za davÄne blagajne
 
 Paket vsebuje dve implementaciji:
   JSON impmlementacijo, kjer deluje:
     prijava prostora
-    izvaja raèuna za zavezance za DDV
-    izdaja raèuna za ne zavezance za DDV
-  še ne deluje
+    izvaja raÄuna za zavezance za DDV
+    izdaja raÄuna za ne zavezance za DDV
+    spremembe raÄuna
+  Å¡e ne deluje
     preverjanje podpisa odgovora od FURS
-    prijava premiène blagajne
-    izdaja raèuna iz vezane knjige
+    prijava premiÄne blagajne
+    izdaja raÄuna iz vezane knjige
     nekatera manj pogosto uporabljena polja v TaxesPerSeller
   
-  SOAP implementacija ima teave s podpisovanjem zato niti nisem dokonèaval izdaje raèuna
+  SOAP implementacija ima teÅ¾ave s podpisovanjem zato niti nisem dokonÄal izdaje raÄuna
   
-Primeru uporabe so v testnih vzorcih. Pred tem si naredi java keystore z vsemi certifikati iz keys mape in s privatnim kljuèem, ki si ga dobil
-od FURS in ga pod imenom keystore.jks in z geslom changeiz shrani na mapo keys
+Primeri uporabe so v testnih vzorcih. Pred tem si naredi java certifikatno skladiÅ¡Äe keys/keystore.jks:
+  z vsemi certifikati iz keys mape 
+  in s privatnim kljuÄem (keypair), ki si ga dobilod FURS.
+V properties datoteki src/test/resorces/test.properties nastavi:
+  issuer.vat na davÄno Å¡tevilko, ki si jo dobil v privatnem kljuÄu (v polju OU)
+  issuer.signcert.alias na alias, ki si ga nastavil v certifikatnem skladiÅ¡Äu za privatni kljuÄ, ki si ga dobil od FURS
 
-Upam, da ti bo implementacija pomagala. Èe eliš pospešiti implementacijo kakšne manjkajoèe funkcionalnosti ali pomoè pri uporabi se obrni na razvijalca.
+Upam, da ti bo implementacija pomagala. Äe Å¾eliÅ¡ pospeÅ¡iti implementacijo kakÅ¡ne manjkajoÄe funkcionalnosti ali potrebujeÅ¡ pomoÄ pri uporabi se obrni na razvijalca.
     

@@ -20,6 +20,10 @@ package si.gounitis.fursplugin.tests;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.beans.*;
@@ -29,7 +33,15 @@ import si.gounitis.fursplugin.impl.FursPluginJson;
 import java.util.ArrayList;
 import java.util.List;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource("classpath:test.properties")
 public class TestInvoice {
+
+    @Value("${issuer.vat}")
+    public String issuerVat;
+
+    @Value("${issuer.signcert.alias}")
+    public String signingCertAlias;
 
     @Before
     public void before() {
@@ -47,7 +59,7 @@ public class TestInvoice {
 
         Invoice invoice = new Invoice();
         invoice.setSallesBook(false);
-        invoice.setTaxNumber("10075623");
+        invoice.setTaxNumber(issuerVat);
         invoice.setIssueDateTime("2015-11-22T09:55:25");
         invoice.setNumberingStructure('B');
         invoice.setPremiseId("36CF");
@@ -81,7 +93,7 @@ public class TestInvoice {
         invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, signingCertAlias);
             System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
@@ -95,7 +107,7 @@ public class TestInvoice {
 
         Invoice invoice = new Invoice();
         invoice.setSallesBook(false);
-        invoice.setTaxNumber("10075623");
+        invoice.setTaxNumber(issuerVat);
         invoice.setIssueDateTime("2015-11-22T09:55:25");
         invoice.setNumberingStructure('B');
         invoice.setPremiseId("36CF");
@@ -108,7 +120,7 @@ public class TestInvoice {
         invoice.setAux("To je poljuben string dolg najvec 1000 znakov. Sicer ni verjetno, da ga bo ko bral, ampak vseeno");
 
         try {
-            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, signingCertAlias);
             System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);
@@ -123,7 +135,7 @@ public class TestInvoice {
         Invoice invoice = new Invoice();
 
         try {
-            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, "signcert");
+            InvoceReturnValue rv = plugin.issueInvoice(Tools.getNewUiid(), invoice, signingCertAlias);
             System.out.println(rv);
         } catch (FursPluginException e) {
             throw new RuntimeException(e);

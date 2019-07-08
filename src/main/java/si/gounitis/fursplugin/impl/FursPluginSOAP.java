@@ -94,10 +94,8 @@ public class FursPluginSOAP implements FursPlugin{
 
         try {
             Document businessPremiseRequest=getBusinessPremiseRequest(uuid, premise);
-            Document signedBusinessPremiseRequest = SignApache.signDocument(businessPremiseRequest, "#" + SIGN_ELEMENT_ID, "signcert");
+            Document signedBusinessPremiseRequest = SignApache.signDocument(businessPremiseRequest, "#" + SIGN_ELEMENT_ID, signingCertAlias);
             documentToFile(signedBusinessPremiseRequest,"temp/dokument.xml");
-
-
 
             System.out.println(documentToString(signedBusinessPremiseRequest));
 
@@ -142,7 +140,7 @@ public class FursPluginSOAP implements FursPlugin{
 
         try {
             Document invoiceRequest=getInvoiceRequest(uuid, invoice);
-            Document signedInvoiceRequest = Sign.signDocument(invoiceRequest, "#"+SIGN_ELEMENT_ID, "signcert");
+            Document signedInvoiceRequest = Sign.signDocument(invoiceRequest, "#"+SIGN_ELEMENT_ID, signingCertAlias);
             String httpPayload=SOAP_PREPEND+documentToString(signedInvoiceRequest)+SOAP_APPEND;
 
             Map<String, String> httpHeaders= new HashMap<String, String>();

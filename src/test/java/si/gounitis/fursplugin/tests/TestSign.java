@@ -18,8 +18,13 @@
 //********************************************************************************
 package si.gounitis.fursplugin.tests;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import si.gounitis.fursplugin.helpers.SignApache;
@@ -31,16 +36,17 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource("classpath:test.properties")
 public class TestSign {
     private static String ID_VALUE = "data";
 
+    @Value("${issuer.signcert.alias}")
+    public String signingCertAlias;
+
+    @Ignore
     @Test
     public void testSign() {
-        System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-        System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
-
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -64,7 +70,7 @@ public class TestSign {
             //Document sdoc = Sign.signDocument(doc, "#"+ID_VALUE, "signcert");
             //printDocument(sdoc);
 
-            Document sdoc = SignApache.signDocument(doc, "#" + ID_VALUE, "signcert");
+            Document sdoc = SignApache.signDocument(doc, "#" + ID_VALUE, signingCertAlias);
             printDocument(sdoc);
         } catch (Exception e) {
             throw new RuntimeException(e);

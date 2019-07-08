@@ -18,6 +18,7 @@
 //********************************************************************************
 package si.gounitis.fursplugin.tests;
 
+import org.junit.Before;
 import org.junit.Test;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
@@ -26,15 +27,18 @@ import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
 public class TestPing {
 
+    @Before
+    public void before() {
+        System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
+        System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
+        //System.setProperty("javax.net.debug", "all");
+    }
+
     //@Test
     public void testPing() {
         FursPlugin plugin = new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
-
-
-        System.setProperty("javax.net.ssl.trustStore","keys/keystore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword","changeit");
-        System.setProperty("javax.net.ssl.keyStore","keys/keystore.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword","changeit");
 
         try {
             plugin.ping();
@@ -46,11 +50,6 @@ public class TestPing {
     @Test
     public void testPingJson() {
         FursPlugin plugin = new FursPluginJson("https://blagajne-test.fu.gov.si:9002/v1/cash_registers/echo");
-
-        System.setProperty("javax.net.ssl.trustStore","keys/keystore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword","changeit");
-        System.setProperty("javax.net.ssl.keyStore","keys/keystore.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword","changeit");
 
         try {
             plugin.ping();
