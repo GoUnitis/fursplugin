@@ -19,24 +19,44 @@
 package si.gounitis.fursplugin.tests;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import si.gounitis.fursplugin.FursPlugin;
 import si.gounitis.fursplugin.FursPluginException;
 import si.gounitis.fursplugin.impl.FursPluginJson;
 import si.gounitis.fursplugin.impl.FursPluginSOAP;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource("classpath:test.properties")
 public class TestPing {
+
+    @Value("${truststore.location}")
+    public String truststoreLocation;
+
+    @Value("${truststore.pass}")
+    public String truststorePass;
+
+    @Value("${keystore.location}")
+    public String keystoreLocation;
+
+    @Value("${keystore.pass}")
+    public String keystorePass;
 
     @Before
     public void before() {
-        System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-        System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStore", truststoreLocation);
+        System.setProperty("javax.net.ssl.trustStorePassword", truststorePass);
+        System.setProperty("javax.net.ssl.keyStore", keystoreLocation);
+        System.setProperty("javax.net.ssl.keyStorePassword", keystorePass);
         //System.setProperty("javax.net.debug", "all");
     }
 
-    //@Test
+    @Ignore
+    @Test
     public void testPing() {
         FursPlugin plugin = new FursPluginSOAP("https://blagajne-test.fu.gov.si:9002/v1/cash_registers");
 

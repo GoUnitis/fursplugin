@@ -43,12 +43,24 @@ public class TestPremise {
     @Value("${issuer.signcert.alias}")
     public String signingCertAlias;
 
+    @Value("${truststore.location}")
+    public String truststoreLocation;
+
+    @Value("${truststore.pass}")
+    public String truststorePass;
+
+    @Value("${keystore.location}")
+    public String keystoreLocation;
+
+    @Value("${keystore.pass}")
+    public String keystorePass;
+
     @Before
     public void before() {
-        System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-        System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStore", truststoreLocation);
+        System.setProperty("javax.net.ssl.trustStorePassword", truststorePass);
+        System.setProperty("javax.net.ssl.keyStore", keystoreLocation);
+        System.setProperty("javax.net.ssl.keyStorePassword", keystorePass);
         //System.setProperty("javax.net.debug", "all");
     }
 
